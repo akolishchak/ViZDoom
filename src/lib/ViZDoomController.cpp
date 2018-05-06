@@ -814,7 +814,7 @@ namespace vizdoom {
 
     uint8_t *const DoomController::getScreenBuffer() { return this->screenBuffer; }
 
-    uint8_t *const DoomController::getDepthBuffer() { return this->depthBuffer; }
+    double *const DoomController::getDepthBuffer() { return this->depthBuffer; }
 
     uint8_t *const DoomController::getLabelsBuffer() { return this->labelsBuffer; }
 

@@ -455,7 +455,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			while ((dc_x < stop) && (dc_x & 3))
 			{
 				if(vizDepthMap!=NULL) {
-					vizDepthMap->setActualDepth((unsigned int)  ((MaskedSWall[dc_x] - 7500) * 255) / (1250000 - 7500));
+					vizDepthMap->setActualDepth((DEPTH_TYPE)  ((MaskedSWall[dc_x] - 7500) * 255) / (1250000 - 7500));
 					if (MaskedSWall[dc_x] > 1250000)
 						vizDepthMap->setActualDepth(255);
 					if (MaskedSWall[dc_x] < 7500)
@@ -469,7 +469,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			{
 				for(int pcf=0;pcf<4;pcf++) {
 					if(vizDepthMap!=NULL) {
-						vizDepthMap->helperBuffer[pcf]=(unsigned int)  ((MaskedSWall[dc_x+pcf] - 7500) * 255) / (1250000 - 7500);
+						vizDepthMap->helperBuffer[pcf]=(DEPTH_TYPE)  ((MaskedSWall[dc_x+pcf] - 7500) * 255) / (1250000 - 7500);
 						if (MaskedSWall[dc_x+pcf] > 1250000)
 							vizDepthMap->helperBuffer[pcf]=(255);
 						if (MaskedSWall[dc_x+pcf] < 7500)
@@ -497,7 +497,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			while (dc_x < x2)
 			{
 				if(vizDepthMap!=NULL) {
-					vizDepthMap->setActualDepth((unsigned int)  ((MaskedSWall[dc_x] - 7500) * 255) / (1250000 - 7500));
+					vizDepthMap->setActualDepth((DEPTH_TYPE)  ((MaskedSWall[dc_x] - 7500) * 255) / (1250000 - 7500));
 					if (MaskedSWall[dc_x] > 1250000)
 						vizDepthMap->setActualDepth(255);
 					if (MaskedSWall[dc_x] < 7500)
@@ -1173,7 +1173,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		if(yrepeat==256) a_dc_iscale/=2;
 		//if(yrepeat!=256) printf("YREPEAT: %d\n", yrepeat);
 		if(vizDepthMap!=NULL) {
-			vizDepthMap->setActualDepth((unsigned int)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
+			vizDepthMap->setActualDepth((DEPTH_TYPE)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
 			if (a_dc_iscale > 160000000)
 				vizDepthMap->setActualDepth(255);
 			if (a_dc_iscale < 950000)
@@ -1251,7 +1251,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 						vizDepthMap->storeX(x + z);
 						vizDepthMap->storeY(y1ve[z]);
 						unsigned int a_dc_iscale = vizDepthMap->helperBuffer[z];
-						vizDepthMap->setActualDepth((unsigned int)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
+						vizDepthMap->setActualDepth((DEPTH_TYPE)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
 						if (a_dc_iscale > 160000000)
 							vizDepthMap->setActualDepth(255);
 						if (a_dc_iscale < 950000)
@@ -1275,7 +1275,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 				if(vizDepthMap!=NULL) {
 					unsigned int a_dc_iscale = vizDepthMap->helperBuffer[z];
-					vizDepthMap->setActualDepth((unsigned int)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
+					vizDepthMap->setActualDepth((DEPTH_TYPE)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
 					if (a_dc_iscale > 160000000)
 						vizDepthMap->setActualDepth(255);
 					if (a_dc_iscale < 950000)
@@ -1293,7 +1293,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			if(vizDepthMap!=NULL) {
 				for (unsigned int pcf = 0; pcf < 4; pcf++) {
 					unsigned int a_dc_iscale = vizDepthMap->helperBuffer[pcf];//vince[pcf]<0 ? -vince[pcf] : vince[pcf];
-					vizDepthMap->setActualDepth((unsigned int)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
+					vizDepthMap->setActualDepth((DEPTH_TYPE)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
 					if (a_dc_iscale > 160000000)
 						vizDepthMap->setActualDepth(255);
 					if (a_dc_iscale < 950000)
@@ -1327,7 +1327,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 				if(vizDepthMap!=NULL) {
 					unsigned int a_dc_iscale = vizDepthMap->helperBuffer[z];
-					vizDepthMap->setActualDepth((unsigned int)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
+					vizDepthMap->setActualDepth((DEPTH_TYPE)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
 					if (a_dc_iscale > 160000000)
 						vizDepthMap->setActualDepth(255);
 					if (a_dc_iscale < 950000)
@@ -1367,7 +1367,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 				a_dc_iscale/=4;
 			if(yrepeat==256)
 				a_dc_iscale/=2;
-			vizDepthMap->setActualDepth((unsigned int)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
+			vizDepthMap->setActualDepth((DEPTH_TYPE)  ((a_dc_iscale / 100 - 9500) * 255) / (1600000 - 9500));
 			if (a_dc_iscale > 160000000)
 				vizDepthMap->setActualDepth(255);
 			if (a_dc_iscale < 950000)

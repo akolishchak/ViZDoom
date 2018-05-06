@@ -33,7 +33,9 @@
 namespace vizdoom{
 
     typedef std::vector<uint8_t> Buffer;
+    typedef std::vector<double> FloatBuffer;
     typedef std::shared_ptr<Buffer> BufferPtr;
+    typedef std::shared_ptr<FloatBuffer> FloatBufferPtr;
 
     struct Label{
 
@@ -73,7 +75,7 @@ namespace vizdoom{
         std::vector<double> gameVariables;
 
         BufferPtr screenBuffer;
-        BufferPtr depthBuffer;
+        FloatBufferPtr depthBuffer;
         BufferPtr labelsBuffer;
         BufferPtr automapBuffer;
 

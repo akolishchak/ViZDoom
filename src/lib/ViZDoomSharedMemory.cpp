@@ -123,8 +123,8 @@ namespace vizdoom {
         return static_cast<uint8_t *>(this->region[2].address);
     }
 
-    uint8_t *SharedMemory::getDepthBuffer() {
-        return static_cast<uint8_t *>(this->region[3].address);
+    double *SharedMemory::getDepthBuffer() {
+        return static_cast<double *>(this->region[3].address);
     }
 
     uint8_t *SharedMemory::getLabelsBuffer() {

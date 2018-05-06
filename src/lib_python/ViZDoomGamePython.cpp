@@ -75,7 +75,7 @@ namespace vizdoom {
             this->pyState->screenBuffer = this->dataToNumpyArray(colorDims, this->colorShape, NPY_UBYTE, this->state->screenBuffer->data());
         else this->pyState->screenBuffer = pyb::none();
         if (this->state->depthBuffer != nullptr)
-            this->pyState->depthBuffer = this->dataToNumpyArray(2, this->grayShape, NPY_UBYTE, this->state->depthBuffer->data());
+            this->pyState->depthBuffer = this->dataToNumpyArray(2, this->grayShape, NPY_DOUBLE, this->state->depthBuffer->data());
         else this->pyState->depthBuffer = pyb::none();
         if (this->state->labelsBuffer != nullptr)
             this->pyState->labelsBuffer = this->dataToNumpyArray(2, this->grayShape, NPY_UBYTE, this->state->labelsBuffer->data());

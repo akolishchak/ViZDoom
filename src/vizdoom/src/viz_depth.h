@@ -35,19 +35,21 @@
 #include <SDL_video.h>
 #endif
 
+typedef double DEPTH_TYPE;
+
 class VIZDepthBuffer{
 public:
     VIZDepthBuffer(unsigned int width, unsigned int height);
     ~VIZDepthBuffer();
 
-    BYTE *getBuffer();
-    BYTE *getBufferPoint(unsigned int x, unsigned int y);
-    void setPoint(unsigned int x, unsigned int y, BYTE depth);
+    DEPTH_TYPE *getBuffer();
+    DEPTH_TYPE *getBufferPoint(unsigned int x, unsigned int y);
+    void setPoint(unsigned int x, unsigned int y, DEPTH_TYPE depth);
     void setPoint(unsigned int x, unsigned int y);
-    void setActualDepth(BYTE depth);
-    void setActualDepthConv(int depth);
+    void setActualDepth(DEPTH_TYPE depth);
+    void setActualDepthConv(DEPTH_TYPE depth);
     void setDepthBoundries(int maxDepth, int minDepth);
-    void updateActualDepth(int adsb);
+    void updateActualDepth(DEPTH_TYPE adsb);
     void storeX(int x);
     void storeY(int y);
     int getX(void);
@@ -57,7 +59,7 @@ public:
     unsigned int getBufferWidth();
     unsigned int getBufferHeight();
     void clearBuffer();
-    void clearBuffer(BYTE color);
+    void clearBuffer(DEPTH_TYPE color);
     void lock();
     void unlock();
     bool isLocked();
@@ -69,14 +71,14 @@ public:
     #endif
 
 private:
-    BYTE *buffer;
+    DEPTH_TYPE *buffer;
     unsigned int bufferSize;
     unsigned int bufferWidth;
     unsigned int bufferHeight;
-    BYTE actualDepth;
+    DEPTH_TYPE actualDepth;
     int maxDepth;
     int minDepth;
-    int convSteps;
+    DEPTH_TYPE convSteps;
     int tX, tY;
     bool locked;
 

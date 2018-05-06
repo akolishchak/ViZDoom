@@ -422,8 +422,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 				//VIZDOOM_CODE
 				if(vizDepthMap!=NULL) {
-					for(int pcf = 0; pcf < 4; ++pcf) {
-						vizDepthMap->helperBuffer[pcf]=((unsigned int)  ((dc_iscale - 500) * 255) / (320000 - 500));
+					for(int pcf=0;pcf<4;pcf++) {
+						vizDepthMap->helperBuffer[pcf]=((DEPTH_TYPE)  ((dc_iscale - 500) * 255) / (320000 - 500));
 						if (dc_iscale > 320000)
 							vizDepthMap->helperBuffer[pcf]=(255);
 						if (dc_iscale < 500)

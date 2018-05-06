@@ -189,7 +189,7 @@ namespace vizdoom {
         SMGameState *getGameState();
         SMInputState *getInputState();
         uint8_t *getScreenBuffer();
-        uint8_t *getDepthBuffer();
+        double *getDepthBuffer();
         uint8_t *getLabelsBuffer();
         uint8_t *getAutomapBuffer();
 

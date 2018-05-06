@@ -194,7 +194,7 @@ namespace vizdoom {
 
         /* Buffers in SM */
         uint8_t *const getScreenBuffer();
-        uint8_t *const getDepthBuffer();
+        double *const getDepthBuffer();
         uint8_t *const getLabelsBuffer();
         uint8_t *const getAutomapBuffer();
 
@@ -311,7 +311,7 @@ namespace vizdoom {
         SMInputState *_input;
 
         uint8_t *screenBuffer;
-        uint8_t *depthBuffer;
+        double *depthBuffer;
         uint8_t *automapBuffer;
         uint8_t *labelsBuffer;
 

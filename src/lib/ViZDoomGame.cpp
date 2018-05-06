@@ -240,8 +240,8 @@ namespace vizdoom {
             this->state->screenBuffer = std::make_shared<std::vector<uint8_t>>(buf, buf + colorSize);
 
             if (this->doomController->isDepthBufferEnabled()) {
-                buf = this->doomController->getDepthBuffer();
-                this->state->depthBuffer = std::make_shared<std::vector<uint8_t>>(buf, buf + graySize);
+                double *buf = this->doomController->getDepthBuffer();
+                this->state->depthBuffer = std::make_shared<std::vector<double>>(buf, buf + graySize);
             } else this->state->depthBuffer = nullptr;
 
             if (this->doomController->isLabelsEnabled()) {

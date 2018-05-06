@@ -204,7 +204,7 @@ void R_DrawColumnP_C (void)
 	frac = dc_texturefrac;
 
 	if(vizDepthMap!=NULL) {
-		vizDepthMap->setActualDepth((unsigned int)((dc_iscale - 500) * 255) / (320000 - 500));
+		vizDepthMap->setActualDepth((DEPTH_TYPE)((dc_iscale - 500) * 255) / (320000 - 500));
 		if (dc_iscale > 320000)
 			vizDepthMap->setActualDepth(255);
 		if (dc_iscale < 500)

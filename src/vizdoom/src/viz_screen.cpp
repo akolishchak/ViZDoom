@@ -32,7 +32,8 @@ size_t vizScreenPitch, vizScreenSize, vizScreenChannelSize;
 int posMulti, rPos, gPos, bPos, aPos;
 bool alpha;
 
-BYTE *vizScreenSM = NULL, *vizDepthSM = NULL, *vizLabelsSM = NULL, *vizAutomapSM = NULL;
+BYTE *vizScreenSM = NULL, *vizLabelsSM = NULL, *vizAutomapSM = NULL;
+double *vizDepthSM = NULL;
 
 EXTERN_CVAR (Bool, viz_debug)
 EXTERN_CVAR (Int, viz_screen_format)
@@ -165,8 +166,8 @@ void VIZ_ScreenUpdateSM(){
     size_t SMBufferSize[4] = {vizScreenSize, 0, 0, 0};
     size_t SMBuffersSize = vizScreenSize;
     if (*viz_depth){
-        SMBuffersSize += vizScreenChannelSize;
-        SMBufferSize[1] = vizScreenChannelSize;
+        SMBuffersSize += vizScreenChannelSize * sizeof(double);
+        SMBufferSize[1] = vizScreenChannelSize * sizeof(double);
     }
     if (*viz_labels){
         SMBuffersSize += vizScreenChannelSize;
@@ -197,7 +198,7 @@ void VIZ_ScreenUpdateSM(){
     }
 
     vizScreenSM = static_cast<BYTE *>(VIZ_SM_SCREEN.address);
-    vizDepthSM = static_cast<BYTE *>(VIZ_SM_DEPTH.address);
+    vizDepthSM = static_cast<double *>(VIZ_SM_DEPTH.address);
     vizLabelsSM = static_cast<BYTE *>(VIZ_SM_LABELS.address);
     vizAutomapSM = static_cast<BYTE *>(VIZ_SM_AUTOMAP.address);
 }

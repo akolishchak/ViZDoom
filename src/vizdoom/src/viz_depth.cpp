@@ -32,7 +32,7 @@ VIZDepthBuffer* vizDepthMap = NULL;
 VIZDepthBuffer::VIZDepthBuffer(unsigned int width, unsigned int height):
         bufferSize(height*width), bufferWidth(width), bufferHeight(height) {
 
-    buffer = new BYTE[bufferSize];
+    buffer = new DEPTH_TYPE[bufferSize];
     memset(buffer, 0, bufferSize);
 
     this->setDepthBoundries(120000000, 358000);
@@ -73,10 +73,10 @@ VIZDepthBuffer::~VIZDepthBuffer() {
 }
 
 // Get depth buffer pointer
-BYTE* VIZDepthBuffer::getBuffer() { return buffer; }
+DEPTH_TYPE* VIZDepthBuffer::getBuffer() { return buffer; }
 
 // Get pointer for requested pixel (x, y coords)
-BYTE* VIZDepthBuffer::getBufferPoint(unsigned int x, unsigned int y) {
+DEPTH_TYPE* VIZDepthBuffer::getBufferPoint(unsigned int x, unsigned int y) {
     if( x < bufferWidth && y < bufferHeight )
         return buffer + x + y * bufferWidth;
     else return NULL;
@@ -88,28 +88,28 @@ void VIZDepthBuffer::setPoint(unsigned int x, unsigned int y) {
 }
 
 // Set point(x,y) value with requested depth
-inline void VIZDepthBuffer::setPoint(unsigned int x, unsigned int y, BYTE depth) {
-    BYTE *dpth = getBufferPoint(x, y);
+void VIZDepthBuffer::setPoint(unsigned int x, unsigned int y, DEPTH_TYPE depth) {
+    DEPTH_TYPE *dpth = getBufferPoint(x, y);
     if(dpth!=NULL) *dpth = depth;
 }
 
 // Store depth value for later usage
-void VIZDepthBuffer::setActualDepth(BYTE depth) {
+void VIZDepthBuffer::setActualDepth(DEPTH_TYPE depth) {
     if(this->isLocked())
         return;
     if(this->bufferHeight==480)
         this->actualDepth=depth;
     else {
-        int dpth=depth;
+        DEPTH_TYPE dpth=depth;
         dpth *= (double) this->bufferHeight / 480;
         if(dpth>255)
             dpth=255;
-        this->actualDepth=(BYTE) dpth;
+        this->actualDepth=(DEPTH_TYPE) dpth;
     }
 }
 
 // Store depth value for later usage with automated conversion based on stored boundries
-void VIZDepthBuffer::setActualDepthConv(int depth) {
+void VIZDepthBuffer::setActualDepthConv(DEPTH_TYPE depth) {
     if(this->isLocked())
         return;
     if(depth>maxDepth)
@@ -118,13 +118,13 @@ void VIZDepthBuffer::setActualDepthConv(int depth) {
         this->actualDepth=0;
     else {
         depth-=minDepth;
-        this->actualDepth = (unsigned int)  (depth-minDepth) / this->convSteps;
+        this->actualDepth = (DEPTH_TYPE)  (depth-minDepth) / this->convSteps;
     }
 }
 
 // Increase or decrease stored depth value by adsb
-void VIZDepthBuffer::updateActualDepth(int adsb) {
-    int act = this->actualDepth;
+void VIZDepthBuffer::updateActualDepth(DEPTH_TYPE adsb) {
+    DEPTH_TYPE act = this->actualDepth;
     if(this->isLocked())
         return;
     if(act+adsb>255)
@@ -148,7 +148,7 @@ int VIZDepthBuffer::getY(void) {return this->tY; }
 
 // Get buffer size
 unsigned int VIZDepthBuffer::getBufferSize(){
-    return this->bufferSize;
+    return this->bufferSize*sizeof(DEPTH_TYPE);
 }
 
 // Set boundries for storing depth value with conversion
@@ -175,7 +175,7 @@ void VIZDepthBuffer::clearBuffer() {
 }
 
 // Set every point to color value
-void VIZDepthBuffer::clearBuffer(BYTE color) {
+void VIZDepthBuffer::clearBuffer(DEPTH_TYPE color) {
     for(unsigned int i=0;i<bufferSize;i++)
         buffer[i]=color;
 }
@@ -192,7 +192,7 @@ void VIZDepthBuffer::sizeUpdate() {
         this->bufferHeight=(unsigned)screen->GetHeight();
         this->bufferWidth= (unsigned)screen->GetWidth();
         this->bufferSize=this->bufferHeight*this->bufferWidth;
-        this->buffer = new BYTE[this->bufferSize];
+        this->buffer = new DEPTH_TYPE[this->bufferSize];
 
         #ifdef VIZ_DEPTH_TEST
             SDL_SetWindowSize(this->window, this->bufferWidth,this->bufferHeight);
