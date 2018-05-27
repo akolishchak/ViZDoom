@@ -8,6 +8,7 @@
 from __future__ import print_function
 from random import choice
 from time import sleep
+import matplotlib.pyplot as plt
 
 from vizdoom import *
 from oblige import *
@@ -60,6 +61,11 @@ for i in range(1, episodes + 1):
 
     while not game.is_episode_finished():
         state = game.get_state()
+        labels = state.labels_buffer
+        plt.imsave("object.png", labels)
+        for label in state.labels:
+            print(label.object_id, label.object_name)
+        sleep(0.1)
 
         game.advance_action()
         last_action = game.get_last_action()

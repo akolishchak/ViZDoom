@@ -22,14 +22,28 @@ https://github.com/mwydmuch/ViZDoom/issues/190
 We cannot provide original Doom's assets due to licensing issues.
 ViZDoom uses [freedoom2.wad](https://freedoom.github.io) as default assets.
 However, you can use original Doom's assets by placing doom.wad or doom2.wad.
-You can just place it in you working directory, 
+You can just place it in you working directory,
 specify path to it by using [`DoomGame: setDoomGamePath`](DoomGame.md#setDoomGamePath)
 or place it in the same directory as vizdoom(.exe).
 
 
+### How to create/modify scenarios?
+
+You can create or modify existing scenarios using many available Doom map editors.
+We recommend using one of these two editors:
+- [SLADE3](http://slade.mancubus.net/) - great Doom map (scenario) editor for Linux, MacOS and Windows.
+- [Doom Builder 2](http://www.doombuilder.com/) - another great Doom map editor for Windows.
+
+You should select ZDoom as your Doom engine version and UDMF map format (Universal Doom Map Format),
+that supports the widest range of features.
+
+**Original issue and answer:**
+https://github.com/mwydmuch/ViZDoom/issues/319
+
+
 ### How to stack frames?
 
-ViZDoom does not automatically stacks frames for you. 
+ViZDoom does not automatically stacks frames for you.
 You have to manually store the states from [`DoomGame: getState`](DoomGame.md#getState). and build up stacked states for your agent.
 
 **Original issue and answer: (contains code an example)**
@@ -45,6 +59,14 @@ You can also load .ini file from different location using [`DoomGame: setDoomCon
 
 **Original issue and answer:**
 https://github.com/mwydmuch/ViZDoom/issues/253
+
+
+### Is it possible to generate maze navigation scenario from a text file (like in DeepMind Lab)?
+
+Try [NavDoom](https://github.com/agiantwhale/navdoom).
+
+**Original issue and answer:**
+https://github.com/mwydmuch/ViZDoom/issues/308
 
 
 ### How to control game speed in `ASYNC` modes?
