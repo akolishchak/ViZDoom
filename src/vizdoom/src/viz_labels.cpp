@@ -22,11 +22,12 @@
 
 #include "viz_labels.h"
 #include "v_video.h"
+#include "p_lnspec.h"
 
 #ifdef VIZ_LABELS_TEST
 #include <SDL_events.h>
 #endif
-    
+
 VIZLabelsBuffer* vizLabels = NULL;
 
 VIZLabelsBuffer::VIZLabelsBuffer(unsigned int width, unsigned int height):
@@ -35,8 +36,15 @@ VIZLabelsBuffer::VIZLabelsBuffer(unsigned int width, unsigned int height):
     buffer = new BYTE[bufferSize];
     memset(buffer, 0, bufferSize);
 
+    this->labeled = VIZ_MAX_SEG_LABELS;
     this->currentLabel = 0;
     this->currentSprite = nullptr;
+
+    this->currentSegmentLabel = 0;
+    this->exitSignId = -1;
+    FTextureID exitSign = TexMan.CheckForTexture("EXITSIGN", FTexture::TEX_Any);
+    if (exitSign.Exists())
+        this->exitSignId = exitSign.GetIndex();
 
     // SDL debug stuff
     #ifdef VIZ_LABELS_TEST
@@ -86,7 +94,16 @@ BYTE* VIZLabelsBuffer::getBufferPoint(unsigned int x, unsigned int y) {
 
 // Set point(x,y) value with next label
 void VIZLabelsBuffer::setPoint(unsigned int x, unsigned int y) {
-    this->setPoint(x, y, this->currentLabel);
+    if (this->currentLabel != 0)
+        this->setPoint(x, y, this->currentLabel);
+    else
+        this->setSegPoint(x, y);
+    this->updateBoundingBox(x, y);
+}
+
+void VIZLabelsBuffer::setSegPoint(unsigned int x, unsigned int y)
+{
+    this->setPoint(x, y, this->currentSegmentLabel);
     this->updateBoundingBox(x, y);
 }
 
@@ -121,9 +138,11 @@ void VIZLabelsBuffer::clearBuffer(BYTE color) {
     memset(buffer, color, bufferSize);
 
     this->sprites.clear();
-    this->labeled = 0;
+    this->labeled = VIZ_MAX_SEG_LABELS;
     this->pSprite = NULL;
     this->unsetSprite();
+    this->segments.clear();
+    this->unsetSegment();
 }
 
 void VIZLabelsBuffer::lock() {this->locked=true; }
@@ -167,11 +186,10 @@ void VIZLabelsBuffer::addSprite(AActor *actor, vissprite_t* vis){
     this->sprites.push_back(sprite);
 }
 
-void VIZLabelsBuffer::addPSprite(AActor *actor, vissprite_t* vis){
-    if(this->pSprite != NULL){
+void VIZLabelsBuffer::addPSprite(AActor *actor, vissprite_t* vis) {
+    if (this->pSprite != NULL) {
         this->pSprite->vissprite = vis;
-    }
-    else {
+    } else {
         VIZSprite sprite;
         sprite.actor = actor;
         sprite.actorId = 0;
@@ -190,7 +208,7 @@ BYTE VIZLabelsBuffer::getLabel(VIZSprite* sprite){
     if(sprite->psprite) sprite->label = VIZ_MAX_LABELS - 1;
     else{
         ++labeled;
-        sprite->label = static_cast<BYTE>(labeled * (VIZ_MAX_LABELS - 1) / (this->sprites.size() + 1));
+        sprite->label = labeled;
     }
     sprite->labeled = true;
     return sprite->label;
@@ -246,6 +264,62 @@ void VIZLabelsBuffer::unsetSprite(){
     this->currentLabel = 0;
     this->currentSprite = NULL;
 }
+
+void VIZLabelsBuffer::setSegment(seg_t *seg)
+{
+    if ( seg == NULL )
+        return;
+
+    BYTE label;
+
+    if (seg->linedef != NULL) {
+        int special = seg->linedef->special;
+        if (special == Teleport_NewMap || special == Teleport_EndGame ||
+            special == Exit_Normal || special == Exit_Secret)
+        {
+            label = 1;
+            auto iter = this->segments.find(label);
+            if ( iter == this->segments.end())
+                this->segments[label] = "Exit";
+            this->currentSegmentLabel = label;
+
+            return;
+        }
+    }
+
+    if (this->exitSignId >= 0 && seg->sidedef != NULL) {
+        side_t *side = seg->sidedef;
+        for (size_t i = 0; i < countof(side->textures); i++) {
+            if (side->textures[i].texture.GetIndex() == this->exitSignId) {
+
+                label = 2;
+                auto iter = this->segments.find(label);
+                if ( iter == this->segments.end())
+                    this->segments[label] = "ExitSign";
+                this->currentSegmentLabel = label;
+
+                return;
+            }
+        }
+    }
+}
+
+void VIZLabelsBuffer::unsetSegment()
+{
+    this->currentSegmentLabel = 0;
+}
+
+// Store x value for later usage
+void VIZLabelsBuffer::storeX(int x) {this->tX=x; }
+
+// Store y value for later usage
+void VIZLabelsBuffer::storeY(int y) {this->tY=y; }
+
+// Get stored x value
+int VIZLabelsBuffer::getX(void) {return this->tX; }
+
+// Get stored y value
+int VIZLabelsBuffer::getY(void) {return this->tY; }
 
 
 #ifdef VIZ_LABELS_TEST

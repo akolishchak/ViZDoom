@@ -46,6 +46,7 @@
 
 //VIZDOOM_CODE
 #include "viz_depth.h"
+#include "viz_labels.h"
 
 #undef RANGECHECK
 
@@ -240,6 +241,7 @@ void R_DrawColumnP_C (void)
 			dest += pitch;
 			frac += fracstep;
 			if(vizDepthMap!=NULL) vizDepthMap->setPoint(dc_x, dc_yl+dc_count-count);
+			if(vizLabels!=NULL) vizLabels->setSegPoint(dc_x, dc_yl+dc_count-count);
 
 		} while (--count);
 	}
@@ -1123,6 +1125,7 @@ void R_DrawSpanP_C (void)
 			//  re-index using light/colormap.
 			*dest++ = colormap[source[spot]];
 			if(vizDepthMap!=NULL) vizDepthMap->setPoint(ds_x2-count+1,ds_y);
+			if(vizLabels!=NULL) vizLabels->setSegPoint(ds_x2-count+1,ds_y);
 			// Next step in u,v.
 			xfrac += xstep;
 			yfrac += ystep;
@@ -1143,6 +1146,7 @@ void R_DrawSpanP_C (void)
 			//  re-index using light/colormap.
 			*dest++ = colormap[source[spot]];
 			if(vizDepthMap!=NULL) vizDepthMap->setPoint(ds_x2-count+1,ds_y);
+			if(vizLabels!=NULL) vizLabels->setSegPoint(ds_x2-count+1,ds_y);
 			// Next step in u,v.
 			xfrac += xstep;
 			yfrac += ystep;
@@ -1700,6 +1704,7 @@ DWORD STACK_ARGS vlinec1 ()
 		frac += fracstep;
 		dest += pitch;
 		if(vizDepthMap!=NULL) vizDepthMap->setPoint((unsigned int)vizDepthMap->getX(),(unsigned int)vizDepthMap->getY()+dc_count-count);
+		if(vizLabels!=NULL) vizLabels->setSegPoint((unsigned int)vizLabels->getX(),(unsigned int)vizLabels->getY()+dc_count-count);
 	} while (--count);
 
 	return frac;

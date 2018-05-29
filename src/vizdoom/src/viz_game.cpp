@@ -359,6 +359,16 @@ void VIZ_GameStateUpdateLabels(){
     unsigned int labelCount = 0;
     if(!*viz_nocheat && vizLabels != NULL && !vizGameStateSM->MAP_END){
 
+        for ( auto i = vizLabels->segments.begin(); i != vizLabels->segments.end(); i++) {
+            VIZLabel *label = &vizGameStateSM->LABEL[labelCount];
+            memset(label, 0, sizeof(*label));
+            label->objectId = -1;
+            label->value = i->first;
+            strncpy(label->objectName, i->second, VIZ_MAX_LABEL_NAME_LEN);
+
+            ++labelCount;
+        }
+
         VIZ_DebugMsg(4, VIZ_FUNC, "number of sprites: %d", gametic, vizLabels->getSprites().size());
 
         //TODO sort vizLabels->sprites

@@ -53,6 +53,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "viz_depth.h"
+#include "viz_labels.h"
 
 #define WALLYREPEAT 8
 
@@ -1195,6 +1196,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			vizDepthMap->storeX(x);
 			vizDepthMap->storeY(y1ve[0]);
 		}
+		if(vizLabels!=NULL) {
+			vizLabels->storeX(x);
+			vizLabels->storeY(y1ve[0]);
+		}
 		dovline1();
 	}
 
@@ -1257,6 +1262,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 						if (a_dc_iscale < 950000)
 							vizDepthMap->setActualDepth(0);
 					}
+					if(vizLabels!=NULL) {
+						vizLabels->storeX(x + z);
+						vizLabels->storeY(y1ve[z]);
+					}
 					prevline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
 				}
 				bad >>= 1;
@@ -1281,6 +1290,12 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 					if (a_dc_iscale < 950000)
 						vizDepthMap->setActualDepth(0);
 				}
+
+				if(vizLabels!=NULL) {
+					vizLabels->storeX(x + z);
+					vizLabels->storeY(y1ve[z]);
+				}
+
 				vplce[z] = prevline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
 			}
 		}
@@ -1312,6 +1327,12 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 					}*/
 				}
 			}
+            if(vizLabels!=NULL) {
+                for (unsigned int pcf = 0; pcf < 4; pcf++) {
+                    for (int c = 0; c <= dc_count; c++)
+                        vizLabels->setSegPoint(x + pcf, u4 + c);
+                }
+			}
 			dovline4();
 		}
 
@@ -1333,6 +1354,12 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 					if (a_dc_iscale < 950000)
 						vizDepthMap->setActualDepth(0);
 				}
+
+				if(vizLabels!=NULL) {
+					vizLabels->storeX(x + z);
+					vizLabels->storeY(d4);
+				}
+
 				prevline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
 			}
 		}
@@ -1372,6 +1399,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 				vizDepthMap->setActualDepth(255);
 			if (a_dc_iscale < 950000)
 				vizDepthMap->setActualDepth(0);
+		}
+		if(vizLabels!=NULL) {
+			vizLabels->storeX(x);
+			vizLabels->storeY(y1ve[0]);
 		}
 		dovline1();
 	}

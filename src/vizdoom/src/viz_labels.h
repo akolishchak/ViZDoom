@@ -43,13 +43,16 @@
 
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 #ifdef VIZ_LABELS_TEST
 #include <SDL_video.h>
 #endif
 
 #define VIZ_MAX_LABELS 256
+#define VIZ_MAX_SEG_LABELS 10
 #define VIZ_MAX_LABEL_NAME_LEN 128
+
 
 struct VIZLabel{
     BYTE value;
@@ -98,6 +101,7 @@ public:
     BYTE *getBufferPoint(unsigned int x, unsigned int y);
     void setPoint(unsigned int x, unsigned int y, BYTE label);
     void setPoint(unsigned int x, unsigned int y);
+    void setSegPoint(unsigned int x, unsigned int y);
     unsigned int getBufferSize();
     unsigned int getBufferWidth();
     unsigned int getBufferHeight();
@@ -120,6 +124,14 @@ public:
     void setSprite(vissprite_t* vis);
     void unsetSprite();
 
+    void setSegment(seg_t *seg);
+    void unsetSegment();
+    void storeX(int x);
+    void storeY(int y);
+    int getX(void);
+    int getY(void);
+
+
     std::vector<VIZSprite> getSprites();
 
     #ifdef VIZ_LABELS_TEST
@@ -127,6 +139,7 @@ public:
     #endif
 
     std::vector<VIZSprite> sprites;
+    std::map<BYTE, char *> segments;
 
 private:
 
@@ -140,6 +153,10 @@ private:
     BYTE currentLabel;
     VIZSprite *currentSprite;
     VIZSprite *pSprite;
+
+    BYTE currentSegmentLabel;
+    int tX, tY;
+    int exitSignId;
 
     std::unordered_map<AActor*, unsigned int> actors;
 

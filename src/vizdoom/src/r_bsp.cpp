@@ -57,6 +57,8 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 
+#include "viz_labels.h"
+
 seg_t*			curline;
 side_t* 		sidedef;
 line_t* 		linedef;
@@ -735,10 +737,16 @@ void R_AddLine (seg_t *line)
 #endif
 	}
 
-	if (R_ClipWallSegment (WallC.sx1, WallC.sx2, solid))
+    if ( vizLabels != NULL )
+        vizLabels->setSegment(line);
+
+    if (R_ClipWallSegment (WallC.sx1, WallC.sx2, solid))
 	{
 		InSubsector->flags |= SSECF_DRAWN;
 	}
+
+    if ( vizLabels != NULL )
+        vizLabels->unsetSegment();
 }
 
 //
