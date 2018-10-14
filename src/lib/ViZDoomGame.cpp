@@ -277,11 +277,16 @@ namespace vizdoom {
 
     ServerStatePtr DoomGame::getServerState(){
         ServerStatePtr serverState = std::make_shared<ServerState>();
+
+        serverState->tic = this->doomController->getMapTic();
         serverState->playerCount = this->doomController->getPlayerCount();
         for(int i = 0; i < MAX_PLAYERS; ++i){
             serverState->playersInGame[i] = this->doomController->isPlayerInGame(i);
             serverState->playersNames[i] = this->doomController->getPlayerName(i);
             serverState->playersFrags[i] = this->doomController->getPlayerFrags(i);
+            serverState->playersAfk[i] = this->doomController->isPlayerAfk(i);
+            serverState->playersLastActionTic[i] = this->doomController->getPlayerLastActionTic(i);
+            serverState->playersLastKillTic[i] = this->doomController->getPlayerLastKillTic(i);
         }
 
         return serverState;

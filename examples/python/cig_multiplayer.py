@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+#####################################################################
+# This script presents how to join and play a deathmatch game,
+# that can be hosted using cig_multiplayer_host.py script.
+#####################################################################
 
 from __future__ import print_function
 from vizdoom import *

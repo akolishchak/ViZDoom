@@ -6,7 +6,7 @@ project(ViZDoom)
 
 set(ViZDoom_MAJOR_VERSION 1)
 set(ViZDoom_MINOR_VERSION 1)
-set(ViZDoom_PATCH_VERSION 5)
+set(ViZDoom_PATCH_VERSION 6)
 set(ViZDoom_VERSION ${ViZDoom_MAJOR_VERSION}.${ViZDoom_MINOR_VERSION}.${ViZDoom_PATCH_VERSION})
 set(ViZDoom_VERSION_STR ${ViZDoom_VERSION})
 set(ViZDoom_VERSION_ID ${ViZDoom_MAJOR_VERSION}${ViZDoom_MINOR_VERSION}${ViZDoom_PATCH_VERSION})
@@ -18,6 +18,7 @@ option(BUILD_PYTHON "Build ViZDoom Python binding." OFF)
 option(BUILD_PYTHON3 "Build ViZDoom Python3 binding instead of default Python2." OFF)
 option(BUILD_LUA "Build ViZDoom Lua binding." OFF) # only for Lua 5.1 and LuaJIT
 option(BUILD_JAVA "Build ViZDoom Java binding." OFF)
+option(BUILD_JULIA "Build ViZDoom Julia binding." OFF)
 option(BUILD_ENGINE "Build ViZDoom game engine." ON)
 option(DOWNLOAD_FREEDOOM "Download freedoom2.wad." ON)
 
@@ -393,6 +394,9 @@ if (BUILD_JAVA)
 
 endif ()
 
+if (BUILD_JULIA)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/lib_julia)
+endif ()
 
 # Freedoom 2 download
 #-----------------------------------------------------------------------------------------------------------------------
