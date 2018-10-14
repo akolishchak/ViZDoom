@@ -274,6 +274,7 @@ void VIZLabelsBuffer::setSegment(seg_t *seg)
 
     if (seg->linedef != NULL) {
         int special = seg->linedef->special;
+        int	*args = seg->linedef->args;
         if (special == Teleport_NewMap || special == Teleport_EndGame ||
             special == Exit_Normal || special == Exit_Secret)
         {
@@ -285,6 +286,33 @@ void VIZLabelsBuffer::setSegment(seg_t *seg)
 
             return;
         }
+
+        if ( special == Door_LockedRaise || special == ACS_LockedExecute || special == ACS_LockedExecuteDoor ||
+             (special == Door_Animated ) || (special == Generic_Door ) ||
+             (special == FS_Execute ) || special == Door_Open || special == Door_Close ||
+                special == Door_CloseWaitOpen || special == Door_Raise)
+        {
+            label = 2;
+            auto iter = this->segments.find(label);
+            if ( iter == this->segments.end())
+                this->segments[label] = "Door";
+            this->currentSegmentLabel = label;
+
+            return;
+        }
+
+        if ( LineSpecialsInfo[special] != NULL && LineSpecialsInfo[special]->max_args >= 0 &&
+             special != Door_Open && special != Door_Close && special != Door_CloseWaitOpen &&
+             special != Door_Raise && special != Door_Animated && special != Generic_Door )
+        {
+            label = 3;
+            auto iter = this->segments.find(label);
+            if ( iter == this->segments.end())
+                this->segments[label] = "Switch";
+            this->currentSegmentLabel = label;
+
+            return;
+        }
     }
 
     if (this->exitSignId >= 0 && seg->sidedef != NULL) {
@@ -292,7 +320,7 @@ void VIZLabelsBuffer::setSegment(seg_t *seg)
         for (size_t i = 0; i < countof(side->textures); i++) {
             if (side->textures[i].texture.GetIndex() == this->exitSignId) {
 
-                label = 2;
+                label = 4;
                 auto iter = this->segments.find(label);
                 if ( iter == this->segments.end())
                     this->segments[label] = "ExitSign";
