@@ -25,7 +25,6 @@
 #include "ViZDoomPathHelpers.h"
 #include "ViZDoomUtilities.h"
 #include "ViZDoomVersion.h"
-#include "boost/process.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/chrono.hpp>
@@ -37,8 +36,6 @@ namespace vizdoom {
     namespace bal       = boost::algorithm;
     namespace bc        = boost::chrono;
     namespace bfs       = boost::filesystem;
-    namespace bpr       = boost::process;
-    namespace bpri      = boost::process::initializers;
 
 
     /* Public methods */
@@ -100,6 +97,9 @@ namespace vizdoom {
         this->amMode = NORMAL;
         this->amRotate = false;
         this->amTextures = true;
+
+        this->objects = false;
+        this->sectors = false;
 
         this->hud = false;
         this->minHud = false;
@@ -198,47 +198,55 @@ namespace vizdoom {
     }
 
     void DoomController::close() {
+        try{
+            if (this->doomRunning) {
+                this->doomRunning = false;
+                this->doomWorking = false;
 
-        if (this->doomRunning) {
+                this->MQDoom->send(MSG_CODE_CLOSE);
 
-            this->doomRunning = false;
-            this->doomWorking = false;
+                #ifdef OS_LINUX
+                    if(0 == kill(this->doomProcessPid, 0)){
+                        bpr::child doomProcess(this->doomProcessPid);
+                        bpr::terminate(doomProcess);
+                    }
+                #endif
+            }
 
-            this->MQDoom->send(MSG_CODE_CLOSE);
+            if (this->signalThread && this->signalThread->joinable()) {
+                this->ioService->stop();
+
+                this->signalThread->interrupt();
+                this->signalThread->join();
+                delete this->signalThread;
+                this->signalThread = nullptr;
+
+                delete this->ioService;
+                this->ioService = nullptr;
+            }
+
+            if (this->doomThread && this->doomThread->joinable()) {
+                this->doomThread->interrupt();
+                this->doomThread->join();
+                delete this->doomThread;
+                this->doomThread = nullptr;
+            }
+
+            if (this->SM) {
+                delete this->SM;
+                this->SM = nullptr;
+            }
+
+            if (this->MQDoom) {
+                delete this->MQDoom;
+                this->MQDoom = nullptr;
+            }
+            if (this->MQController) {
+                delete this->MQController;
+                this->MQController = nullptr;
+            }
         }
-
-        if (this->signalThread && this->signalThread->joinable()) {
-            this->ioService->stop();
-
-            this->signalThread->interrupt();
-            this->signalThread->join();
-            delete this->signalThread;
-            this->signalThread = nullptr;
-
-            delete this->ioService;
-            this->ioService = nullptr;
-        }
-
-        if (this->doomThread && this->doomThread->joinable()) {
-            this->doomThread->interrupt();
-            this->doomThread->join();
-            delete this->doomThread;
-            this->doomThread = nullptr;
-        }
-
-        if (this->SM) {
-            delete this->SM;
-            this->SM = nullptr;
-        }
-
-        if (this->MQDoom) {
-            delete this->MQDoom;
-            this->MQDoom = nullptr;
-        }
-        if (this->MQController) {
-            delete this->MQController;
-            this->MQController = nullptr;
-        }
+        catch (...) { throw; }
 
         this->gameState = nullptr;
         this->input = nullptr;
@@ -246,6 +254,7 @@ namespace vizdoom {
         this->depthBuffer = nullptr;
         this->labelsBuffer = nullptr;
         this->automapBuffer = nullptr;
+
     }
 
     void DoomController::restart() {
@@ -283,7 +292,7 @@ namespace vizdoom {
 
         int ticsMade = 0;
 
-        for (int i = 0; i < tics; ++i) {
+        for (unsigned int i = 0; i < tics; ++i) {
             if (i == tics - 1) this->tic(update);
             else this->tic(false);
 
@@ -435,6 +444,7 @@ namespace vizdoom {
             // Workaround for some problems
             this->sendCommand(std::string("map ") + this->map);
             this->MQDoom->send(MSG_CODE_TIC);
+            this->waitForDoomWork();
 
             this->sendCommand(std::string("playdemo ") + prepareLmpFilePath(demoPath));
 
@@ -468,6 +478,24 @@ namespace vizdoom {
         }
     }
 
+    void DoomController::saveGame(std::string filePath){
+        if (this->doomRunning && !this->mapChanging) {
+            this->sendCommand(std::string("save ") + filePath);
+            //this->MQDoom->send(MSG_CODE_SAVE);
+        }
+    }
+
+    void DoomController::loadGame(std::string filePath){
+        if (this->doomRunning && !this->mapChanging) {
+            this->sendCommand(std::string("load ") + filePath);
+
+            //this->MQDoom->send(MSG_CODE_LOAD);
+            this->MQDoom->send(MSG_CODE_UPDATE);
+            this->waitForDoomWork();
+
+            this->mapLastTic = this->gameState->MAP_TIC;
+        }
+    }
 
     /* Settings */
     /*----------------------------------------------------------------------------------------------------------------*/
@@ -593,7 +621,7 @@ namespace vizdoom {
         this->updateSettings = true;
     }
 
-    /* Labels */
+    /* Labels buffer */
     bool DoomController::isLabelsEnabled() {
         if (this->doomRunning) return this->gameState->LABELS;
         else return labels;
@@ -607,7 +635,7 @@ namespace vizdoom {
         }
     }
 
-    /* Automap */
+    /* Automap buffer */
     bool DoomController::isAutomapEnabled() {
         if (this->doomRunning) return this->gameState->AUTOMAP;
         else return automap;
@@ -634,6 +662,33 @@ namespace vizdoom {
     void DoomController::setAutomapRenderTextures(bool textures) {
         this->amTextures = textures;
         if (this->doomRunning) this->setRenderMode(this->getRenderModeValue());
+    }
+
+    /* Objects (actors) and map state */
+    bool DoomController::isObjectsEnabled() {
+        if (this->doomRunning) return this->gameState->OBJECTS;
+        else return objects;
+    }
+
+    void DoomController::setObjectsEnabled(bool objects) {
+        this->objects = objects;
+        if (this->doomRunning) {
+            if (this->objects) this->sendCommand("viz_objects 1");
+            else this->sendCommand("viz_objects 0");
+        }
+    }
+
+    bool DoomController::isSectorsEnabled() {
+        if (this->doomRunning) return this->gameState->SECTORS;
+        else return sectors;
+    }
+
+    void DoomController::setSectorsEnabled(bool sectors) {
+        this->sectors = sectors;
+        if (this->doomRunning) {
+            if (this->sectors) this->sendCommand("viz_sectors 1");
+            else this->sendCommand("viz_sectors 0");
+        }
     }
 
     void DoomController::setScreenWidth(unsigned int width) {
@@ -949,6 +1004,8 @@ namespace vizdoom {
             return this->gameState->PLAYER_WEAPON[var - WEAPON0];
         else if(var >= POSITION_X && var <= VELOCITY_Z)
             return this->gameState->PLAYER_MOVEMENT[var - POSITION_X];
+        else if(var >= CAMERA_POSITION_X && var <= CAMERA_FOV)
+            return this->gameState->CAMERA[var - CAMERA_POSITION_X];
         else if(var >= USER1 && var <= USER60)
             return this->gameState->MAP_USER_VARS[var - USER1];
         else if (var >= PLAYER1_FRAGCOUNT && var <= PLAYER16_FRAGCOUNT)
@@ -1197,9 +1254,13 @@ namespace vizdoom {
         // resolution and aspect ratio
         this->doomArgs.push_back("-width");
         this->doomArgs.push_back(b::lexical_cast<std::string>(this->screenWidth));
-
         this->doomArgs.push_back("-height");
         this->doomArgs.push_back(b::lexical_cast<std::string>(this->screenHeight));
+
+        //this->doomArgs.push_back("+vid_defwidth");
+        //this->doomArgs.push_back(b::lexical_cast<std::string>(this->screenWidth));
+        //this->doomArgs.push_back("+vid_defheight");
+        //this->doomArgs.push_back(b::lexical_cast<std::string>(this->screenHeight));
 
         float ratio = static_cast<float>(this->screenWidth) / this->screenHeight;
 
@@ -1265,19 +1326,30 @@ namespace vizdoom {
             this->doomArgs.push_back("1");
         }
 
-        // labels
+        // labels buffer
         if (this->labels) {
             this->doomArgs.push_back("+viz_labels");
             this->doomArgs.push_back("1");
         }
 
-        // automap
+        // automap buffer
         if (this->automap) {
             this->doomArgs.push_back("+viz_automap");
             this->doomArgs.push_back("1");
 
             this->doomArgs.push_back("+viz_automap_mode");
             this->doomArgs.push_back(b::lexical_cast<std::string>(this->amMode));
+        }
+
+        // objects (actors) and map state
+        if (this->objects) {
+            this->doomArgs.push_back("+viz_objects");
+            this->doomArgs.push_back("1");
+        }
+
+        if (this->sectors) {
+            this->doomArgs.push_back("+viz_sectors");
+            this->doomArgs.push_back("1");
         }
 
         // render mode
@@ -1336,6 +1408,9 @@ namespace vizdoom {
     void DoomController::launchDoom() {
         try {
             bpr::child doomProcess = bpr::execute(bpri::set_args(this->doomArgs), bpri::inherit_env());
+            #ifdef OS_LINUX
+                this->doomProcessPid = doomProcess.pid;
+            #endif
             bpr::wait_for_exit(doomProcess);
         }
         catch (...) {

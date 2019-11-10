@@ -54,16 +54,6 @@
 #define VIZ_MAX_LABEL_NAME_LEN 128
 
 
-struct VIZLabel{
-    BYTE value;
-    unsigned int position[2];
-    unsigned int size[2];
-
-    unsigned int objectId;
-    double objectPosition[9];
-    char objectName[VIZ_MAX_LABEL_NAME_LEN];
-};
-
 struct VIZSprite{
     unsigned int actorId;
     AActor* actor;

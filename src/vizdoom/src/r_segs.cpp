@@ -1328,11 +1328,13 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 				}
 			}
             if(vizLabels!=NULL) {
+                vizLabels->setLabel(0);
                 for (unsigned int pcf = 0; pcf < 4; pcf++) {
                     for (int c = 0; c <= dc_count; c++)
-                        vizLabels->setSegPoint(x + pcf, u4 + c);
+                        vizLabels->setPoint(x + pcf, u4 + c);
                 }
-			}
+                vizLabels->setLabel(0);
+            }
 			dovline4();
 		}
 

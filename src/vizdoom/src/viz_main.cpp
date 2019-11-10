@@ -79,6 +79,8 @@ CVAR (Int, viz_screen_format, 0, 0)
 CVAR (Bool, viz_depth, false, 0)
 CVAR (Bool, viz_labels, false, 0)
 CVAR (Bool, viz_automap, false, 0)
+CVAR (Bool, viz_objects, false, 0)
+CVAR (Bool, viz_sectors, false, 0)
 
 // rendering options (bitset)
 CVAR (Int, viz_render_mode, 0, 0)
@@ -254,7 +256,6 @@ void VIZ_Update(){
     VIZ_D_ScreenDisplay();
     VIZ_ScreenUpdate();
     VIZ_GameStateUpdate();
-    VIZ_GameStateUpdateLabels();
 
     vizLastUpdate = VIZ_TIME;
     vizUpdate = false;
@@ -323,8 +324,8 @@ EXTERN_CVAR(Int, am_cheat)
 EXTERN_CVAR(Int, am_rotate)
 EXTERN_CVAR(Bool, am_textured)
 EXTERN_CVAR(Bool, am_followplayer)
-EXTERN_CVAR(Bool, am_drawmapback)
-EXTERN_CVAR(Int, am_showtriggerlines)
+EXTERN_CVAR(Int, am_drawmapback)
+EXTERN_CVAR(Bool, am_showtriggerlines)
 
 EXTERN_CVAR(Bool, am_showitems)
 EXTERN_CVAR(Bool, am_showmonsters)

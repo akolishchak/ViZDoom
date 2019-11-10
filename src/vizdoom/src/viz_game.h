@@ -68,6 +68,35 @@ extern VIZPlayerLogger vizPlayerLogger[VIZ_MAX_PLAYERS];
 
 void VIZ_LogDmg(AActor *target, AActor *inflictor, AActor *source, int damage);
 
+// These structures should reflect structures in lib/ViZDoomSharedMemory.h
+struct VIZLabel{
+    BYTE value;
+    unsigned int position[2];
+    unsigned int size[2];
+
+    unsigned int objectId;
+    double objectPosition[9];
+    char objectName[VIZ_MAX_NAME_LEN];
+};
+
+struct VIZObject{
+    unsigned int id;
+    double position[9];
+    char name[VIZ_MAX_NAME_LEN];
+};
+
+struct VIZSector{
+    double floorHeight;
+    double ceilingHeight;
+    unsigned int lineCount;
+    unsigned int lines[128];
+};
+
+struct VIZLine{
+    double position[4];
+    //int frontSector, backSector;
+    bool isBlocking;
+};
 
 struct VIZGameState{
     // VERSION
@@ -102,6 +131,8 @@ struct VIZGameState{
     bool DEPTH_BUFFER;
     bool LABELS;
     bool AUTOMAP;
+    bool OBJECTS;
+    bool SECTORS;
 
     // MAP
     unsigned int MAP_START_TIC;
@@ -141,7 +172,8 @@ struct VIZGameState{
     int PLAYER_AMMO[VIZ_GV_SLOTS_SIZE];
     int PLAYER_WEAPON[VIZ_GV_SLOTS_SIZE];
 
-    double PLAYER_MOVEMENT[9];
+    double PLAYER_MOVEMENT[10];
+    double CAMERA[7];
 
     bool PLAYER_READY_TO_RESPAWN;
     unsigned int PLAYER_NUMBER;
@@ -159,12 +191,25 @@ struct VIZGameState{
     unsigned int LABEL_COUNT;
     VIZLabel LABEL[VIZ_MAX_LABELS];
 
+    // OBJECTS
+    unsigned int OBJECT_COUNT;
+    VIZObject OBJECT[VIZ_MAX_OBJECTS];
+
+    // SECTORS
+    unsigned int SECTOR_COUNT;
+    VIZSector SECTOR[VIZ_MAX_SECTORS];
+
+    // LINES
+    unsigned int LINE_COUNT;
+    VIZLine LINE[VIZ_MAX_LINES];
+
     // LOGGED
     int PLAYER_HITCOUNT;
     int PLAYER_HITS_TAKEN;
     int PLAYER_DAMAGECOUNT;
     int PLAYER_DAMAGE_TAKEN;
 };
+
 
 void VIZ_GameStateInit();
 
@@ -174,7 +219,13 @@ void VIZ_GameStateTic();
 
 void VIZ_GameStateUpdate();
 
+void VIZ_GameStateUpdateVariables();
+
 void VIZ_GameStateUpdateLabels();
+
+void VIZ_GameStateUpdateObjects();
+
+void VIZ_GameStateUpdateSectors();
 
 void VIZ_GameStateInitNew();
 

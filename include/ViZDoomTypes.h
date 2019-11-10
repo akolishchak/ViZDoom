@@ -37,8 +37,7 @@ namespace vizdoom{
     typedef std::shared_ptr<Buffer> BufferPtr;
     typedef std::shared_ptr<FloatBuffer> FloatBufferPtr;
 
-    struct Label{
-
+    struct Label {
         // Label properties
         uint8_t value;
         unsigned int x;
@@ -46,7 +45,7 @@ namespace vizdoom{
         unsigned int width;
         unsigned int height;
 
-        //bool isObjectHostile;
+        //bool isObjectHostile; // Right know we do not provide this information
         //bool isObjectPickable;
         //bool isObjectUsable;
 
@@ -68,6 +67,39 @@ namespace vizdoom{
         std::string objectName;
     };
 
+    struct Object {
+        // Actor properties
+        //unsigned int id; // Right know we do not assign uniq ids to objects
+
+        double positionX;
+        double positionY;
+        double positionZ;
+
+        double angle;
+        double pitch;
+        double roll;
+
+        double velocityX;
+        double velocityY;
+        double velocityZ;
+
+        std::string name;
+    };
+
+    struct Line{
+        double x1;
+        double y1;
+        double x2;
+        double y2;
+        bool isBlocking;
+    };
+
+    struct Sector{
+        double floorHeight;
+        double ceilingHeight;
+        std::vector<Line> lines;
+    };
+
     struct GameState {
         unsigned int number;
         unsigned int tic;
@@ -80,6 +112,10 @@ namespace vizdoom{
         BufferPtr automapBuffer;
 
         std::vector<Label> labels;
+
+        std::vector<Object> objects;
+
+        std::vector<Sector> sectors;
     };
 
     typedef std::shared_ptr<GameState> GameStatePtr;
@@ -223,9 +259,18 @@ namespace vizdoom{
         ANGLE,
         PITCH,
         ROLL,
+        VIEW_HEIGHT,
         VELOCITY_X,
         VELOCITY_Y,
         VELOCITY_Z,
+
+        CAMERA_POSITION_X,
+        CAMERA_POSITION_Y,
+        CAMERA_POSITION_Z,
+        CAMERA_ANGLE,
+        CAMERA_PITCH,
+        CAMERA_ROLL,
+        CAMERA_FOV,
 
         PLAYER_NUMBER,
         PLAYER_COUNT,

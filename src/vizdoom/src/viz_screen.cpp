@@ -35,7 +35,7 @@ bool alpha;
 BYTE *vizScreenSM = NULL, *vizLabelsSM = NULL, *vizAutomapSM = NULL;
 double *vizDepthSM = NULL;
 
-EXTERN_CVAR (Bool, viz_debug)
+EXTERN_CVAR (Int, viz_debug)
 EXTERN_CVAR (Int, viz_screen_format)
 EXTERN_CVAR (Bool, viz_depth)
 EXTERN_CVAR (Bool, viz_labels)
@@ -150,6 +150,7 @@ void VIZ_ScreenFormatUpdate(){
         delete vizDepthMap;
         vizDepthMap = NULL;
     }
+
     if (vizLabels != NULL){
         delete vizLabels;
         vizLabels = NULL;

@@ -7,6 +7,8 @@
 * [replayEpisode](#replayEpisode)
 * [isRunning](#isRunning)
 * [isMultiplayerGame](#isMultiplayerGame)
+* [isRecordingEpisode](#isRecordingEpisode)
+* [isReplayingEpisode](#isReplayingEpisode)
 * [setAction](#setAction)
 * [advanceAction](#advanceAction)
 * [makeAction](#makeAction)
@@ -16,6 +18,7 @@
 * [respawnPlayer](#respawnPlayer)
 * [sendGameCommand](#sendGameCommand)
 * [getState](#getState)
+* [getServerState](#getServerState)
 * [getLastAction](#getLastAction)
 * [getEpisodeTime](#getEpisodeTime)
 
@@ -100,7 +103,10 @@
 * [getScreenChannels](#getScreenChannels)
 * [getScreenPitch](#getScreenPitch)
 * [getScreenSize](#getScreenSize)
-
+* [isObjectsInfoEnabled](#isObjectsInfoEnabled)
+* [setObjectsInfoEnabled](#setObjectsInfoEnabled)
+* [isSectorsInfoEnabled](#isSectorsInfoEnabled)
+* [setSectorsInfoEnabled](#setSectorsInfoEnabled)
 
 ## <a name="flow"></a> Flow control methods:
 
@@ -170,8 +176,8 @@ After calling this method, the first state from replay will be available.
 All rewards, variables and state are available during replaying episode.
 
 See also:
-- [examples/python/record_episodes.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/record_episodes.py),
-- [examples/python/record_multiplayer.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/record_multiplayer.py).
+- [examples/python/record_episodes.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/record_episodes.py)
+- [examples/python/record_multiplayer.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/record_multiplayer.py)
 
 
 ---
@@ -201,13 +207,41 @@ Checks if the game is in multiplayer mode.
 
 
 ---
+### <a name="isRecordingEpisode"></a> `isRecordingEpisode`
+
+| C++    | `bool isRecordingEpisode()`    |
+| :--    | :--                            |
+| Lua    | `boolean isRecordingEpisode()` |
+| Java   | `boolean isRecordingEpisode()` |
+| Python | `bool is_recording_episode()`  |
+
+Added in 1.1.5
+
+Checks if the game is in recording mode.
+
+
+---
+### <a name="isReplayingEpisode"></a> `isReplayingEpisode`
+
+| C++    | `bool isReplayingEpisode()`    |
+| :--    | :--                            |
+| Lua    | `boolean isReplayingEpisode()` |
+| Java   | `boolean isReplayingEpisode()` |
+| Python | `bool is_replaying_episode()`  |
+
+Added in 1.1.5
+
+Checks if the game is in replaying mode.
+
+
+---
 ### <a name="setAction"></a> `setAction`
 
 | C++    | `void setAction(std::vector<double> const &actions)` |
-| :--    | :--                                                 |
-| Lua    | `void setAction(DoubleTensor/table actions)`        |
-| Java   | `void setAction(double[] actions)`                  |
-| Python | `void set_action(list actions)`                     |
+| :--    | :--                                                  |
+| Lua    | `void setAction(DoubleTensor/table actions)`         |
+| Java   | `void setAction(double[] actions)`                   |
+| Python | `void set_action(list actions)`                      |
 
 Sets the player's action for the next tics.
 Each value corresponds to a button specified with [`addAvailableButton`](#addAvailableButton) method
@@ -232,10 +266,10 @@ If `updateState` is not set the state will not be updated.
 ### <a name="makeAction"></a> `makeAction`
 
 | C++    | `double makeAction(std::vector<double> const &actions, unsigned int tics = 1)` |
-| :--    | :--                                                                         |
+| :--    | :--                                                                            |
 | Lua    | `number makeAction(DoubleTensor/table actions, number tics = 1);`              |
 | Java   | `double makeAction(double[] actions, int tics = 1);`                           |
-| Python | `float make_action(list actions, int tics = 1);`                            |
+| Python | `float make_action(list actions, int tics = 1);`                               |
 
 Method combining usability of [`setAction`](#setAction), [`advanceAction`](#advanceAction) and [`getLastReward`](#getLastReward).
 Sets the player's action for the next tics, processes a specified number of tics,
@@ -306,10 +340,13 @@ See also:
 | Java   | `void sendGameCommand(String cmd)`      |
 | Python | `void send_game_command(str cmd)`       |
 
-Sends the command to Doom console. Can be used for cheats, multiplayer etc.
+Sends the command to Doom console. Can be used for controling game, changing settings, cheats etc.
 Some commands will be blocked in some modes.
 
-See also: [ZDoom Wiki](http://zdoom.org/wiki/Console)
+See also: 
+- [ZDoom Wiki: Console](http://zdoom.org/wiki/Console)
+- [ZDoom Wiki: CVARs (console variables)](https://zdoom.org/wiki/CVARs) 
+- [ZDoom Wiki: CCMD (console commands)](https://zdoom.org/wiki/CCMDs) 
 
 
 ---
@@ -324,20 +361,37 @@ See also: [ZDoom Wiki](http://zdoom.org/wiki/Console)
 Changed in 1.1.0
 
 Returns [`GameState`](Types.md#gamestate) object with the current game state.
-If the game is not running or the current episode is finished `nullptr/null/None` will be returned.
+If the current episode is finished `nullptr/null/None` will be returned.
 
 See also:
 - [`Types: GameState`](Types.md#gamestate)
 
 
 ---
+### <a name="getServerState"></a> `getServerState`
+
+| C++    | `ServerStatePtr (std::shared_ptr<ServerState>) ServerState getServerState()` |
+| :--    | :--                                                                          |
+| Lua    | `ServerState getServerState()`                                               |
+| Java   | `ServerState getServerState()`                                               |
+| Python | `ServerState get_state_state()`                                              |
+
+Added in 1.1.6
+
+Returns [`ServerState`](Types.md#serverstate) object with the current server state. 
+
+See also:
+- [`Types: ServerState`](Types.md#serverstate)
+
+
+---
 ### <a name="getLastAction"></a> `getLastAction`
 
 | C++    | `std::vector<double> getLastAction()` |
-| :--    | :--                                |
+| :--    | :--                                   |
 | Lua    | `DoubleTensor getLastAction()`        |
 | Java   | `double[] getLastAction()`            |
-| Python | `list get_last_action()`           |
+| Python | `list get_last_action()`              |
 
 Returns the last action performed.
 Each value corresponds to a button added with `[addAvailableButton](#addAvailableButton)` (in order of appearance).
@@ -347,11 +401,11 @@ Most useful in `SPECTATOR` mode.
 ---
 ### <a name="getEpisodeTime"></a> `getEpisodeTime`
 
-| C++    | `unsigned int getEpisodeTime()`   |
-| :--    | :--                               |
-| Lua    | `number getEpisodeTime()`         |
-| Java   | `int getEpisodeTime()`            |
-| Python | `int get_episode_time()`          |
+| C++    | `unsigned int getEpisodeTime()` |
+| :--    | :--                             |
+| Lua    | `number getEpisodeTime()`       |
+| Java   | `int getEpisodeTime()`          |
+| Python | `int get_episode_time()`        |
 
 Returns number of current episode tic.
 
@@ -367,11 +421,12 @@ Returns number of current episode tic.
 | Java   | `Button[] getAvailableButtons()`            |
 | Python | `list get_available_buttons()`              |
 
-TODO
+Returns the list of available `Buttons`.
 
 See also:
 - [`Types: Button`](Types.md#button)
-- [`ConfigFile: List`](ConfigFile.md#list)
+- [`addAvailableButton`](#addAvailableButton)
+- [`setAvailableButtons`](#addAvailableButtons)
 
 
 ---
@@ -383,13 +438,14 @@ See also:
 | Java   | `void addAvailableButton(Button[] buttons)`             |
 | Python | `void add_available_button(list)`                       |
 
-TODO
+Set given list of `Button`s (e.g. `TURN_LEFT`, `MOVE_FORWARD`) as available `Buttons`,
 
 Config key: `availableButtons/available_buttons` (list)
 
 See also:
 - [`Types: Button`](Types.md#button)
 - [`ConfigFile: List`](ConfigFile.md#list)
+- [`addAvailableButton`](#addAvailableButton)
 
 
 ---
@@ -401,16 +457,16 @@ See also:
 | Java   | `void addAvailableButton(Button button, double maxValue = 0)`  |
 | Python | `void add_available_button(Button button, float maxValue = 0)` |
 
-Add `Button` type (e.g. `TURN_LEFT`, `MOVE_FORWARD`) to `Buttons` available in action
-and sets the maximum allowed, absolute value for the specified button.
+Add [`Button`](Types.md#button) type (e.g. `TURN_LEFT`, `MOVE_FORWARD`) to available `Buttons` and sets the maximum allowed, absolute value for the specified button.
 If the given button has already been added, it will not be added again, but the maximum value is overridden.
 
 Config key: `availableButtons/available_buttons` (list)
 
 See also:
 - [`Types: Button`](Types.md#button)
-- [`setButtonMaxValue`](#setButtonMaxValue)
 - [`ConfigFile: List`](ConfigFile.md#list)
+- [`setAvailableButtons`](#addAvailableButtons)
+- [`setButtonMaxValue`](#setButtonMaxValue)
 
 
 ---
@@ -494,7 +550,7 @@ See also:
 ## <a name="vars"></a> GameVariables methods
 
 ---
-### <a name="addAvailableGameVariable"></a> `addAvailableGameVariable`
+### <a name="getAvailableGameVariable"></a> `getAvailableGameVariable`
 
 | C++    | `std::vector<GameVariable> getAvailableGameVariables()` |
 | :--    | :--                                                     |
@@ -502,14 +558,16 @@ See also:
 | Java   | `GameVariable[] getAvailableGameVariables()`            |
 | Python | `list get_available_game_variables()`                   |
 
-TODO
+Returns the list of available `GameVariables`.
 
 See also:
 - [`Types: GameVariable`](Types.md#gamevariable)
+- [`addAvailableGameVariable`](#addAvailableGameVariable)
+- [`setAvailableGameVariables`](#setAvailableGameVariables)
 
 
 ---
-### <a name="addAvailableGameVariable"></a> `addAvailableGameVariable`
+### <a name="setAvailableGameVariables"></a> `setAvailableGameVariables`
 
 | C++    | `void setAvailableGameVariables(std::vector<GameVariable> variables)` |
 | :--    | :--                                                                   |
@@ -517,13 +575,14 @@ See also:
 | Java   | `void setAvailableGameVariables(GameVariable[] variables)`            |
 | Python | `void set_available_game_variables(list variables)`                   |
 
-TODO
+Set list of [`GameVariable`](Types.md#gamevariable) as available `GameVariables` in the [`GameState`](Types.md#gamestate) returned by `getState` method.
 
 Config key: `availableGameVariables/available_game_variables` (list)
 
 See also:
 - [`Types: GameVariable`](Types.md#gamevariable)
 - [`ConfigFile: List`](ConfigFile.md#list)
+- [`addAvailableGameVariable`](#addAvailableGameVariable)
 
 
 ---
@@ -535,14 +594,14 @@ See also:
 | Java   | `void addAvailableGameVariable(GameVariable variable)`    |
 | Python | `void add_available_game_variable(GameVariable variable)` |
 
-Adds the specified [`GameVariable`](Types.md#gamevariable) to the list of game variables (e.g. `HEALTH`, `AMMO1`, `ATTACK_READY`)
-that are included in the [`GameState`](Types.md#gamestate) returned by `getState` method.
+Adds the specified [`GameVariable`](Types.md#gamevariable) to the list of available game variables (e.g. `HEALTH`, `AMMO1`, `ATTACK_READY`) in the [`GameState`](Types.md#gamestate) returned by `getState` method.
 
 Config key: `availableGameVariables/available_game_variables` (list)
 
 See also:
 - [`Types: GameVariable`](Types.md#gamevariable)
 - [`ConfigFile: List`](ConfigFile.md#list)
+- [`setAvailableGameVariables`](#setAvailableGameVariables)
 
 
 ---
@@ -611,8 +670,8 @@ Useful for changing additional game settings.
 Config key: `gameArgs/game_args`
 
 See also:
-- [ZDoom Wiki on command line parameters](http://zdoom.org/wiki/Command_line_parameters)
-- [ZDoom Wiki on CVARS](http://zdoom.org/wiki/CVARS)
+- [ZDoom Wiki: Command line parameters](http://zdoom.org/wiki/Command_line_parameters)
+- [ZDoom Wiki: CVARs (Console Variables)](http://zdoom.org/wiki/CVARS)
 
 
 ---
@@ -1083,7 +1142,7 @@ Config key: `depthBufferEnabled/depth_buffer_enabled`
 
 See also:
 - [`Types: GameState`](Types.md#gamestate)
-- [examples/python/buffers.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/buffers.py),
+- [examples/python/buffers.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/buffers.py)
 
 
 ---
@@ -1121,8 +1180,8 @@ Config key: `labelsBufferEnabled/labels_buffer_enabled`
 See also:
 - [`Types: Label`](Types.md#label)
 - [`Types: GameState`](Types.md#gamestate)
-- [examples/python/labels.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/labels.py),
-- [examples/python/buffers.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/buffers.py),
+- [examples/python/labels.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/labels.py)
+- [examples/python/buffers.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/buffers.py)
 
 
 ---
@@ -1132,7 +1191,7 @@ See also:
 | :--    | :--                                |
 | Lua    | `boolean isAutomapBufferEnabled()` |
 | Java   | `boolean isAutomapBufferEnabled()` |
-| Python | `bool isAutomapBufferEnabled()`    |
+| Python | `bool is_automap_buffer_enabled()` |
 
 Added in 1.1.0
 
@@ -1518,3 +1577,74 @@ Returns size in bytes of one row in screen buffer and map buffer.
 | Python | `int get_screen_size()`  |
 
 Returns size in bytes of screen buffer and map buffer.
+
+
+---
+### <a name="isObjectsInfoEnabled"></a> `isObjectsInfoEnabled`
+
+| C++    | `bool isAutomapBufferEnabled()`    |
+| :--    | :--                                |
+| Lua    | `boolean isAutomapBufferEnabled()` |
+| Java   | `boolean isAutomapBufferEnabled()` |
+| Python | `bool isAutomapBufferEnabled()`    |
+
+Added in 1.1.8
+
+Returns true if the objects information is enabled.
+
+
+---
+### <a name="setObjectsInfoEnabled"></a> `setObjectsInfoEnabled`
+
+| C++    | `void setObjectsInfoEnabled(bool objectsInfo)`    |
+| :--    | :--                                               |
+| Python | `void set_objects_info_enabled(bool objectsInfo)` |
+
+Added in 1.1.8
+
+Enables information about all objects present in current episode/level, it will be available in the state.
+
+Default value: false
+
+Config key: `objectsInfoEnabled/objects_info_enabled`
+
+See also:
+- [`Types: GameState`](Types.md#gamestate)
+- [`Types: Object`](Types.md#object)
+- [examples/python/objects_and_sectors.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/objects_and_sectors.py),
+
+
+---
+### <a name="isSectorsInfoEnabled"></a> `isSectorsInfoEnabled`
+
+| C++    | `bool isSectorsInfoEnabled()`    |
+| :--    | :--                              |
+| Python | `bool is_sectors_info_enabled()` |
+
+Added in 1.1.8
+
+Returns true if the sectors information is enabled.
+
+
+---
+### <a name="setSectorsInfoEnabled"></a> `setSectorsInfoEnabled`
+
+| C++    | `void setSectorsInfoEnabled(bool sectorsInfo)`    |
+| :--    | :--                                               |
+| Python | `void set_sectors_info_enabled(bool sectorsInfo)` |
+
+Added in 1.1.8
+
+Enables information about all sectors (map layout) present in current episode/level, it will be available in the state.
+
+Default value: false
+
+Config key: `sectorsInfoEnabled/sectors_info_enabled`
+
+See also:
+- [`Types: GameState`](Types.md#gamestate)
+- [`Types: Sector`](Types.md#sector)
+- [examples/python/objects_and_sectors.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/objects_and_sectors.py)
+
+
+---

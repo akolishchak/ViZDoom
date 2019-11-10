@@ -211,9 +211,17 @@ mod.set_const("POSITION_Z", POSITION_Z);
 mod.set_const("ANGLE", ANGLE);
 mod.set_const("PITCH", PITCH);
 mod.set_const("ROLL", ROLL);
+mod.set_const("VIEW_HEIGHT", VIEW_HEIGHT);
 mod.set_const("VELOCITY_X", VELOCITY_X);
 mod.set_const("VELOCITY_Y", VELOCITY_Y);
 mod.set_const("VELOCITY_Z", VELOCITY_Z);
+mod.set_const("CAMERA_POSITION_X", CAMERA_POSITION_X);
+mod.set_const("CAMERA_POSITION_Y", CAMERA_POSITION_Y);
+mod.set_const("CAMERA_POSITION_Z", CAMERA_POSITION_Z);
+mod.set_const("CAMERA_ANGLE", CAMERA_ANGLE);
+mod.set_const("CAMERA_PITCH", CAMERA_PITCH);
+mod.set_const("CAMERA_ROLL", CAMERA_ROLL);
+mod.set_const("CAMERA_FOV", CAMERA_FOV);
 mod.set_const("USER1", USER1);
 mod.set_const("USER2", USER2);
 mod.set_const("USER3", USER3);
@@ -340,6 +348,7 @@ mod.add_type<DoomGame>("DoomGame")
     .method("new_episode", [](DoomGame& dg) {dg.newEpisode();})
     .method("load_config", &DoomGame::loadConfig)
     .method("is_running", &DoomGame::isRunning)
+    .method("is_multiplayer_game", &DoomGame::isMultiplayerGame)
     .method("is_recording_episode", &DoomGame::isRecordingEpisode)
     .method("is_replaying_episode", &DoomGame::isReplayingEpisode)
     .method("replay_episode", &DoomGame::replayEpisode)

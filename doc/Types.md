@@ -1,7 +1,11 @@
 # Types
 
 * [Label](#label)
+* [Object](#object)
+* [Line](#line)
+* [Sector](#sector)
 * [GameState](#gamestate)
+* [ServerState](#serverstate)
 * [Enums](#enums)
     * [Mode](#mode)
     * [ScreenFormat](#screenformat)
@@ -50,7 +54,78 @@
 
 **value** - value that represents this particular object in **labelsBuffer**.
 
-**x**, **y**, **width**, **height** - describes bounding box of this particular object in **labelsBuffer**.
+**x**, **y**, **width**, **height** - describes bounding box of this particular object in **labelsBuffer**. Added in 1.1.5.
+
+
+---
+### <a name="object"></a> `Object`
+(`C++ type / Python type` **name**)
+
+- `unsigned int / int` **id **
+- `std::string / str` **name**
+- `double / float` **positionX / position_x**
+- `double / float` **positionY / position_y**
+- `double / float` **positionZ / position_z**
+- `double / float` **angle**
+- `double / float` **pitch**
+- `double / float` **roll**
+- `double / float` **velocityX / velocity_x**
+- `double / float` **velocityY / velocity_y**
+- `double / float` **velocityZ / velocity_z**
+
+**name** - ingame object name, many different objects can have the same name (e.g. Medikit, Clip, Zombie).
+
+Right now `Object` is only available to C++ and Python.
+Added in 1.1.8.
+
+See also:
+- [`DoomGame: setObjectsInfoEnabled`](DoomGame.md#setSectorsInfoEnabled),
+- [examples/python/objects_and_sectors.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/objects_and_sectors.py).
+
+
+---
+### <a name="line"></a> `Line`
+(`C++ type / Python type` **name**)
+
+- `double / float` **x1**
+- `double / float` **y1**
+- `double / float` **x2**
+- `double / float` **y2**
+- `bool / bool` **isBlocking / is_blocking**
+
+**x1**, **y1** - position of the line's first vertex.
+
+**x2**, **y2** - position of the line's second vertex.
+
+**isBlocking / is_blocking** - is true, if line is a wall that can't be passed.
+
+Right now `Line` is only available to C++ and Python.
+Added in 1.1.8.
+
+See also:
+- [examples/python/objects_and_sectors.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/objects_and_sectors.py).
+
+
+---
+### <a name="sector"></a> `Sector`
+(`C++ type / Python type` **name**)
+
+- `double / float` **floorHeight / floor_height**
+- `double / float` **ceilingHeight / ceiling_height**
+- `std::vector<Label> / list` **lines**
+
+**floorHeight / floor_height** - height of the sector's floor.
+
+**ceilingHeight / ceiling_height** - height of the sector's ceiling.
+ 
+**lines** - contains list of line segments, that forms sector. 
+
+Right now `Sector` is only available to C++ and Python.
+Added in 1.1.8.
+
+See also:
+- [`DoomGame: setSectorsInfoEnabled`](DoomGame.md#setSectorsInfoEnabled),
+- [examples/python/objects_and_sectors.py](https://github.com/mwydmuch/ViZDoom/tree/master/examples/python/objects_and_sectors.py).
 
 
 ---
@@ -76,14 +151,20 @@ See also:
 
 
 ---
-#### <a name="delta-buttons"></a> ServerInfo
-(`C++ type / Lua type / Java type / Python type` **name**)
+#### <a name="serverstate"></a> `ServerState`
+(`C++ type / Python type` **name**)
 
-- `unsigned int / number / unsigned int / int` **playerCount / player_count**
-- `bool[] / table / boolean[] / list` **playersInGame / players_in_game**
-- `int[] / table / int[] / list` **playersFrags / players_frags**
-- `std::string[] / table / String[] / list` **playersNames / players_names**
+- `unsigned int / int` **tic**
+- `unsigned int / int` **playerCount / player_count**
+- `bool[] / list` **playersInGame / players_in_game**
+- `int[] / list` **playersFrags / players_frags**
+- `std::string[] / list` **playersNames / players_names**
+- `bool[] / list` **playersAfk / players_afk**
+- `unsigned int[] / list` **playersLastActionTic / players_last_action_tic **
+- `unsigned int[] / list` **playersLastKillTic / players_last_kill_tic **
 
+Right now `ServerInfo` is only available to C++ and Python.
+Added in 1.1.6.
 
 ## <a name="enums"></a> Enums
 
@@ -221,10 +302,10 @@ Enum type that defines all variables that can be obtained from the game.
 - **SECRETCOUNT**   - Counts the number of secret location/objects discovered during the current episode.
 - **FRAGCOUNT**     - Counts the number of players/bots killed, minus the number of committed suicides. Useful only in multiplayer mode.
 - **DEATHCOUNT**    - Counts the number of players deaths during the current episode. Useful only in multiplayer mode.
-- **HITCOUNT**      - Counts number of hit monsters/players/bots during the current episode.
-- **HITS_TAKEN**    - Counts number of hits taken by the player during the current episode.
-- **DAMAGECOUNT**   - Counts number of damage dealt to monsters/players/bots during the current episode.
-- **DAMAGE_TAKEN**  - Counts number of damage taken by the player during the current episode.
+- **HITCOUNT**      - Counts number of hit monsters/players/bots during the current episode. Added in 1.1.5.
+- **HITS_TAKEN**    - Counts number of hits taken by the player during the current episode. Added in 1.1.5.
+- **DAMAGECOUNT**   - Counts number of damage dealt to monsters/players/bots during the current episode. Added in 1.1.5.
+- **DAMAGE_TAKEN**  - Counts number of damage taken by the player during the current episode. Added in 1.1.5.
 - **HEALTH**        - Can be higher then 100!
 - **ARMOR**         - Can be higher then 100!
 - **DEAD**          - True if the player is dead.
@@ -241,9 +322,17 @@ Enum type that defines all variables that can be obtained from the game.
 - **ANGLE**                 - Orientation of the player, not available if `viz_nocheat` is enabled.
 - **PITCH**                 
 - **ROLL**
+- **VIEW_HEIGHT**           - View high of the player, not available if `viz_nocheat` is enabled. Position of the camera in Z axis is equal to **POSITION_Z** + **VIEW_HEIGHT**. Added in 1.1.7.
 - **VELOCITY_X**            - Velocity of the player, not available if `viz_nocheat` is enabled.
 - **VELOCITY_Y**
 - **VELOCITY_Z**
+- **CAMERA_POSITION_X**     - Position of the camera, not available if `viz_nocheat` is enabled. Added in 1.1.7.
+- **CAMERA_POSITION_Y**
+- **CAMERA_POSITION_Z**
+- **CAMERA_ANGLE**          - Orientation of the camera, not available if `viz_nocheat` is enabled. Added in 1.1.7.
+- **CAMERA_PITCH**
+- **CAMERA_ROLL**
+- **CAMERA_FOV**            - Field of view in degrees, not available if `viz_nocheat` is enabled. Added in 1.1.7.
 - **PLAYER_NUMBER**         - Player's number in multiplayer game.
 - **PLAYER_COUNT**          - Number of players in multiplayer game.
 - **PLAYER1_FRAGCOUNT** - **PLAYER16_FRAGCOUNT** - Number of N player's frags

@@ -97,7 +97,11 @@ namespace vizdoom {
 
     void DoomGame::close() {
         if (this->isRunning()) {
-            this->doomController->close();
+            try {
+                this->doomController->close();
+            }
+            catch (...) { throw; }
+
             this->lastAction.clear();
             this->nextAction.clear();
 
@@ -162,10 +166,9 @@ namespace vizdoom {
         if (this->doomController->isTicPossible()) {
             try {
                 this->doomController->tics(tics, updateState);
+                if (updateState) this->updateState();
             }
             catch (...) { throw; }
-
-            if (updateState) this->updateState();
         }
     }
 
@@ -212,13 +215,15 @@ namespace vizdoom {
         this->summaryReward += reward;
         this->lastReward = reward;
 
-        this->lastMapTic = this->doomController->getMapTic();
+        if (this->doomController->isRunDoomAsync()) this->lastMapTic = this->doomController->getMapTic();
+        else this->lastMapTic = this->doomController->getMapLastTic();
 
         /* Update state */
         if (!this->isEpisodeFinished()) {
             this->state = std::make_shared<GameState>();
             this->state->number = this->nextStateNumber++;
             this->state->tic = this->doomController->getMapTic();
+            SMGameState *smState = this->doomController->getGameState();
 
             this->state->gameVariables.resize(this->availableGameVariables.size());
 
@@ -234,7 +239,7 @@ namespace vizdoom {
             int height = this->getScreenHeight();
 
             size_t graySize = static_cast<size_t>(width * height);
-            size_t colorSize = graySize * channels;
+            size_t colorSize = graySize *channels;
 
             uint8_t *buf = this->doomController->getScreenBuffer();
             this->state->screenBuffer = std::make_shared<std::vector<uint8_t>>(buf, buf + colorSize);
@@ -244,9 +249,25 @@ namespace vizdoom {
                 this->state->depthBuffer = std::make_shared<std::vector<double>>(buf, buf + graySize);
             } else this->state->depthBuffer = nullptr;
 
+            this->state->labels.clear();
             if (this->doomController->isLabelsEnabled()) {
                 buf = this->doomController->getLabelsBuffer();
                 this->state->labelsBuffer = std::make_shared<std::vector<uint8_t>>(buf, buf + graySize);
+
+                /* Update labels */
+                size_t labelPartSize = offsetof(struct Label, objectName) - offsetof(struct Label, value);
+                for (unsigned int i = 0; i < smState->LABEL_COUNT; ++i) {
+                    this->state->labels.emplace_back();
+                    std::memcpy(&this->state->labels.back().value, &smState->LABEL[i].value, labelPartSize);
+                    this->state->labels.back().objectName = std::string(smState->LABEL[i].objectName);
+
+                    /*
+                    Label label;
+                    std::memcpy(&label.value, &smState->LABEL[i].value, labelPartSize);
+                    label.objectName = std::string(smState->LABEL[i].objectName);
+                    this->state->labels.push_back(label);
+                     */
+                }
             } else this->state->labelsBuffer = nullptr;
 
             if (this->doomController->isAutomapEnabled()) {
@@ -254,17 +275,40 @@ namespace vizdoom {
                 this->state->automapBuffer = std::make_shared<std::vector<uint8_t>>(buf, buf + colorSize);
             } else this->state->automapBuffer = nullptr;
 
-            /* Update labels */
-            size_t labelPartSize = offsetof(struct Label, objectId) - offsetof(struct Label, value);
-            size_t objectPartSize = offsetof(struct Label, objectName) - offsetof(struct Label, objectId);
+            /* Update objects */
+            this->state->objects.clear();
+            if (this->doomController->isObjectsEnabled()) {
+                //size_t objectPartSize = offsetof(struct Object, objectName) - offsetof(struct Object, objectId);
+                size_t objectPartSize = offsetof(struct Object, name) - offsetof(struct Object, positionX);
+                for (unsigned int i = 0; i < smState->OBJECT_COUNT; ++i) {
+                    this->state->objects.emplace_back();
+                    std::memcpy(&this->state->objects.back().positionX, &smState->OBJECT[i].position[0], objectPartSize);
+                    this->state->objects.back().name = std::string(smState->OBJECT[i].name);
 
-            this->state->labels.clear();
-            for (unsigned int i = 0; i < this->doomController->getGameState()->LABEL_COUNT; ++i) {
-                Label label;
-                std::memcpy(&label.value, &this->doomController->getGameState()->LABEL[i].value, labelPartSize);
-                std::memcpy(&label.objectId, &this->doomController->getGameState()->LABEL[i].objectId, objectPartSize);
-                label.objectName = std::string(this->doomController->getGameState()->LABEL[i].objectName);
-                this->state->labels.push_back(label);
+                    /*
+                    Object object;
+                    //std::memcpy(&object.objectId, &smState->OBJECT[i].objectId, objectPartSize);
+                    std::memcpy(&object.positionX, &smState->OBJECT[i].position[0], objectPartSize);
+                    object.name = std::string(smState->OBJECT[i].name);
+                    this->state->objects.push_back(object);
+                     */
+                }
+            }
+            
+            /* Update sectors */
+            static_assert(sizeof(Line) == sizeof(SMLine), "vizdoom::Line and vizdoom::SMLine have different sizes");
+            this->state->sectors.clear();
+            if(this->doomController->isSectorsEnabled()){
+                for (unsigned int i = 0; i < smState->SECTOR_COUNT; ++i) {
+                    this->state->sectors.emplace_back();
+                    this->state->sectors.back().ceilingHeight = smState->SECTOR[i].ceilingHeight;
+                    this->state->sectors.back().floorHeight = smState->SECTOR[i].floorHeight;
+                    for (unsigned int j = 0; j < smState->SECTOR[i].lineCount; ++j) {
+                        unsigned int l = smState->SECTOR[i].lines[j];
+                        this->state->sectors.back().lines.emplace_back();
+                        std::memcpy(&this->state->sectors.back().lines.back().x1, &smState->LINE[l].position[0], sizeof(Line));
+                    }
+                }
             }
 
         } else this->state = nullptr;
@@ -540,6 +584,14 @@ namespace vizdoom {
 
     void DoomGame::setAutomapRenderTextures(bool textures) { this->doomController->setAutomapRenderTextures(textures); }
 
+    bool DoomGame::isObjectsInfoEnabled() { return this->doomController->isObjectsEnabled(); }
+
+    void DoomGame::setObjectsInfoEnabled(bool objectsInfo) { return this->doomController->setObjectsEnabled(objectsInfo); }
+
+    bool DoomGame::isSectorsInfoEnabled() { return this->doomController->isSectorsEnabled(); }
+
+    void DoomGame::setSectorsInfoEnabled(bool sectorsInfo) { return this->doomController->setSectorsEnabled(sectorsInfo); }
+
     void DoomGame::setRenderHud(bool hud) { this->doomController->setRenderHud(hud); }
 
     void DoomGame::setRenderMinimalHud(bool minimalHud) { this->doomController->setRenderMinimalHud(minimalHud); }
@@ -588,6 +640,13 @@ namespace vizdoom {
         return configLoader.load(filePath);
     }
 
+    void DoomGame::saveState(std::string filePath){
+        this->doomController->saveGame(filePath);
+    }
+
+    void DoomGame::loadState(std::string filePath){
+        this->doomController->loadGame(filePath);
+    }
 }
 
 

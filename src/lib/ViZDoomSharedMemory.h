@@ -33,7 +33,9 @@
 #define SM_REGION_COUNT 6
 
 #define MAX_LABELS 256
-#define MAX_LABEL_NAME_LEN 128
+#define MAX_OBJECTS 2048
+#define MAX_SECTORS 512
+#define MAX_LINES 2048
 
 namespace vizdoom {
 
@@ -69,7 +71,25 @@ namespace vizdoom {
 
         unsigned int objectId;
         double objectPosition[9];
-        char objectName[MAX_LABEL_NAME_LEN];
+        char objectName[MAX_NAME_LENGTH];
+    };
+
+    struct SMObject {
+        unsigned int id;
+        double position[9];
+        char name[MAX_NAME_LENGTH];
+    };
+
+    struct SMSector{
+        double floorHeight;
+        double ceilingHeight;
+        unsigned int lineCount;
+        unsigned int lines[128];
+    };
+
+    struct SMLine{
+        double position[4];
+        bool isBlocking;
     };
 
     struct SMGameState {
@@ -105,6 +125,8 @@ namespace vizdoom {
         bool DEPTH_BUFFER;
         bool LABELS;
         bool AUTOMAP;
+        bool OBJECTS;
+        bool SECTORS;
 
         // MAP
         unsigned int MAP_START_TIC;
@@ -144,7 +166,8 @@ namespace vizdoom {
         int PLAYER_AMMO[SLOT_COUNT];
         int PLAYER_WEAPON[SLOT_COUNT];
 
-        double PLAYER_MOVEMENT[9];
+        double PLAYER_MOVEMENT[10];
+        double CAMERA[7];
 
         bool PLAYER_READY_TO_RESPAWN;
         unsigned int PLAYER_NUMBER;
@@ -158,9 +181,21 @@ namespace vizdoom {
         unsigned int PLAYER_N_LAST_ACTION_TIC[MAX_PLAYERS];
         unsigned int PLAYER_N_LAST_KILL_TIC[MAX_PLAYERS];
 
-        //LABELS
+        // LABELS
         unsigned int LABEL_COUNT;
         SMLabel LABEL[MAX_LABELS];
+
+        // OBJECTS
+        unsigned int OBJECT_COUNT;
+        SMObject OBJECT[MAX_OBJECTS];
+
+        // SECTORS
+        unsigned int SECTOR_COUNT;
+        SMSector SECTOR[MAX_SECTORS];
+
+        // LINES
+        unsigned int LINE_COUNT;
+        SMLine LINE[MAX_LINES];
 
         // LOGGED
         int PLAYER_HITCOUNT;

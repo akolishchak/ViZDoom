@@ -25,7 +25,7 @@
 #include "viz_game.h"
 #include "viz_main.h"
 
-EXTERN_CVAR (Bool, viz_debug)
+EXTERN_CVAR (Int, viz_debug)
 EXTERN_CVAR (Bool, viz_async)
 
 bip::message_queue *vizMQController = nullptr;
@@ -62,7 +62,7 @@ void VIZ_MQSend(uint8_t code, const char * command){
 
     if(vizMQController) vizMQController->send(&msg, sizeof(VIZMessage), 0);
 
-    VIZ_DebugMsg(4, VIZ_FUNC, "Sended msg: %d.", code);
+    VIZ_DebugMsg(4, VIZ_FUNC, "Sent msg: %d.", code);
 }
 
 void VIZ_MQReceive(void *msg) {
@@ -105,12 +105,12 @@ void VIZ_MQTic(){
                 vizNextTic = true;
                 break;
 
-            case VIZ_MSG_CODE_COMMAND :
-                VIZ_Command(strdup(msg.command));
+            case VIZ_MSG_CODE_COMMAND:
+                if(msg.command[0] != '\0') VIZ_Command(strdup(msg.command));
                 VIZ_CVARsUpdate();
                 break;
 
-            case VIZ_MSG_CODE_CLOSE :
+            case VIZ_MSG_CODE_CLOSE:
             case VIZ_MSG_CODE_ERROR:
                 exit(0);
 
@@ -126,5 +126,4 @@ void VIZ_MQClose(){
     delete vizMQDoom;
 	delete[] vizMQControllerName;
 	delete[] vizMQDoomName;
-
 }

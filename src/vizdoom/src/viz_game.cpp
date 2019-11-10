@@ -35,13 +35,16 @@
 #include "g_game.h"
 #include "c_dispatch.h"
 #include "p_acs.h"
+#include "p_setup.h"
 
-EXTERN_CVAR (Bool, viz_debug)
+EXTERN_CVAR (Int, viz_debug)
 EXTERN_CVAR (Bool, viz_nocheat)
 EXTERN_CVAR (Int, viz_screen_format)
 EXTERN_CVAR (Bool, viz_depth)
 EXTERN_CVAR (Bool, viz_labels)
 EXTERN_CVAR (Bool, viz_automap)
+EXTERN_CVAR (Bool, viz_objects)
+EXTERN_CVAR (Bool, viz_sectors)
 EXTERN_CVAR (Bool, viz_loop_map)
 EXTERN_CVAR (Bool, viz_override_player)
 EXTERN_CVAR (Bool, viz_spectator)
@@ -102,12 +105,39 @@ void VIZ_LogDmg(AActor *target, AActor *inflictor, AActor *source, int amount){
 /* Helper functions */
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+template<typename T>
+inline T VIZ_FixedToReal(fixed_t fixed){
+    return static_cast<T>(fixed) / 65536.0;
+}
+
+inline float VIZ_FixedToFloat(fixed_t fixed){
+    return static_cast<float>(fixed) / 65536.0;
+}
+
 inline double VIZ_FixedToDouble(fixed_t fixed){
     return static_cast<double>(fixed) / 65536.0;
 }
 
+template<typename T>
+inline T VIZ_AngleToReal(angle_t angle){
+    return static_cast<T>(angle) / ANGLE_MAX * 360.0;
+}
+
+inline float  VIZ_AngleToFloat(angle_t angle) {
+    return static_cast<float>(angle) / ANGLE_MAX * 360.0;
+}
+
 inline double VIZ_AngleToDouble(angle_t angle) {
     return static_cast<double>(angle) / ANGLE_MAX * 360.0;
+}
+
+template<typename T>
+inline T VIZ_PitchToReal(fixed_t pitch) {
+    return static_cast<T>(pitch) / 32768.0 * 180.0 / 65536.0;
+}
+
+inline float VIZ_PitchToFloat(fixed_t pitch) {
+    return static_cast<float>(pitch) / 32768.0 * 180.0 / 65536.0;
 }
 
 inline double VIZ_PitchToDouble(fixed_t pitch) {
@@ -180,6 +210,14 @@ int VIZ_CheckSlotWeapons(unsigned int slot){
     return inSlot;
 }
 
+void VIZ_CopyActorName(AActor* actor, char* name) {
+    //if(actor->health <= 0 || (actor->flags & MF_CORPSE) || (actor->flags6 & MF6_KILLED)) {
+    if ((actor->flags & MF_CORPSE) || (actor->flags6 & MF6_KILLED)) {
+        strncpy(name, "Dead", VIZ_MAX_NAME_LEN);
+        strncpy(name + 4, actor->GetClass()->TypeName.GetChars(), VIZ_MAX_NAME_LEN - 4);
+    } else strncpy(name, actor->GetClass()->TypeName.GetChars(), VIZ_MAX_NAME_LEN);
+}
+
 
 /* Main functions */
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -226,6 +264,8 @@ void VIZ_GameStateSMUpdate(){
     vizGameStateSM->DEPTH_BUFFER = *viz_depth && vizDepthMap;
     vizGameStateSM->LABELS = *viz_labels && vizLabels;
     vizGameStateSM->AUTOMAP = *viz_automap;
+    vizGameStateSM->OBJECTS = *viz_objects;
+    vizGameStateSM->SECTORS = *viz_sectors;
 
     for(int i = 0; i < VIZ_SM_REGION_COUNT; ++i){
         vizGameStateSM->SM_REGION_OFFSET[i] = vizSMRegion[i].offset;
@@ -273,6 +313,18 @@ void VIZ_GameStateTic(){
 }
 
 void VIZ_GameStateUpdate(){
+    if(!vizGameStateSM) return;
+
+    VIZ_GameStateUpdateVariables();
+
+    if (!*viz_nocheat && !vizGameStateSM->MAP_END) {
+        if (*viz_labels) VIZ_GameStateUpdateLabels();
+        if (*viz_objects) VIZ_GameStateUpdateObjects();
+        if (*viz_sectors) VIZ_GameStateUpdateSectors();
+    }
+}
+
+void VIZ_GameStateUpdateVariables(){
 
     // Reward and ACS vars
     for(int i = 0; i < VIZ_GV_USER_COUNT; ++i) vizGameStateSM->MAP_USER_VARS[i] = ACS_GlobalVars[i+1];
@@ -280,15 +332,26 @@ void VIZ_GameStateUpdate(){
 
     // Player position GameVariables
     if(VIZ_PLAYER.mo != NULL && !*viz_nocheat) {
-        vizGameStateSM->PLAYER_MOVEMENT[0] = VIZ_FixedToDouble(VIZ_PLAYER.mo->__pos.x);
-        vizGameStateSM->PLAYER_MOVEMENT[1] = VIZ_FixedToDouble(VIZ_PLAYER.mo->__pos.y);
-        vizGameStateSM->PLAYER_MOVEMENT[2] = VIZ_FixedToDouble(VIZ_PLAYER.mo->__pos.z);
+        vizGameStateSM->PLAYER_MOVEMENT[0] = VIZ_FixedToDouble(VIZ_PLAYER.mo->__pos.x); //X()
+        vizGameStateSM->PLAYER_MOVEMENT[1] = VIZ_FixedToDouble(VIZ_PLAYER.mo->__pos.y); //Y()
+        vizGameStateSM->PLAYER_MOVEMENT[2] = VIZ_FixedToDouble(VIZ_PLAYER.mo->__pos.z); //Z()
         vizGameStateSM->PLAYER_MOVEMENT[3] = VIZ_AngleToDouble(VIZ_PLAYER.mo->angle);
         vizGameStateSM->PLAYER_MOVEMENT[4] = VIZ_PitchToDouble(VIZ_PLAYER.mo->pitch);
         vizGameStateSM->PLAYER_MOVEMENT[5] = VIZ_AngleToDouble(VIZ_PLAYER.mo->roll);
-        vizGameStateSM->PLAYER_MOVEMENT[6] = VIZ_FixedToDouble(VIZ_PLAYER.mo->velx);
-        vizGameStateSM->PLAYER_MOVEMENT[7] = VIZ_FixedToDouble(VIZ_PLAYER.mo->vely);
-        vizGameStateSM->PLAYER_MOVEMENT[8] = VIZ_FixedToDouble(VIZ_PLAYER.mo->velz);
+        vizGameStateSM->PLAYER_MOVEMENT[6] = VIZ_FixedToDouble(VIZ_PLAYER.viewz) - vizGameStateSM->PLAYER_MOVEMENT[2];
+        vizGameStateSM->PLAYER_MOVEMENT[7] = VIZ_FixedToDouble(VIZ_PLAYER.mo->velx);
+        vizGameStateSM->PLAYER_MOVEMENT[8] = VIZ_FixedToDouble(VIZ_PLAYER.mo->vely);
+        vizGameStateSM->PLAYER_MOVEMENT[9] = VIZ_FixedToDouble(VIZ_PLAYER.mo->velz);
+    }
+
+    if(VIZ_PLAYER.camera != NULL && !*viz_nocheat) {
+        vizGameStateSM->CAMERA[0] = VIZ_FixedToDouble(VIZ_PLAYER.camera->__pos.x); //X()
+        vizGameStateSM->CAMERA[1] = VIZ_FixedToDouble(VIZ_PLAYER.camera->__pos.y); //Y()
+        vizGameStateSM->CAMERA[2] = VIZ_FixedToDouble(VIZ_PLAYER.viewz); //VIZ_FixedToDouble(VIZ_PLAYER.camera->__pos.z); //Z()
+        vizGameStateSM->CAMERA[3] = VIZ_AngleToDouble(VIZ_PLAYER.camera->angle);
+        vizGameStateSM->CAMERA[4] = VIZ_PitchToDouble(VIZ_PLAYER.camera->pitch);
+        vizGameStateSM->CAMERA[5] = VIZ_AngleToDouble(VIZ_PLAYER.camera->roll);
+        vizGameStateSM->CAMERA[6] = VIZ_PLAYER.FOV;
     }
 
     strncpy(vizGameStateSM->PLAYER_NAME, VIZ_PLAYER.userinfo.GetName(), VIZ_MAX_PLAYER_NAME_LEN);
@@ -366,10 +429,9 @@ void VIZ_GameStateUpdate(){
 }
 
 void VIZ_GameStateUpdateLabels(){
-    if(!vizGameStateSM) return;
 
     unsigned int labelCount = 0;
-    if(!*viz_nocheat && vizLabels != NULL && !vizGameStateSM->MAP_END){
+    if(vizLabels != NULL){
 
         for ( auto i = vizLabels->segments.begin(); i != vizLabels->segments.end(); i++) {
             VIZLabel *label = &vizGameStateSM->LABEL[labelCount];
@@ -385,49 +447,132 @@ void VIZ_GameStateUpdateLabels(){
 
         //TODO sort vizLabels->sprites
 
-        for(auto i = vizLabels->sprites.begin(); i != vizLabels->sprites.end(); ++i){
-            if(i->labeled && i->pointCount > 0){
-                VIZLabel *label = &vizGameStateSM->LABEL[labelCount];
-                label->objectId = i->actorId;
-                //if(i->actor->health <= 0 || (i->actor->flags & MF_CORPSE) || (i->actor->flags6 & MF6_KILLED)) {
-                if((i->actor->flags & MF_CORPSE) || (i->actor->flags6 & MF6_KILLED)) {
-                    strncpy(label->objectName, "Dead", VIZ_MAX_LABEL_NAME_LEN);
-                    strncpy(label->objectName + 4, i->actor->GetClass()->TypeName.GetChars(), VIZ_MAX_LABEL_NAME_LEN - 4);
-                }
-                else strncpy(label->objectName, i->actor->GetClass()->TypeName.GetChars(), VIZ_MAX_LABEL_NAME_LEN);
+        for(auto& sprite : vizLabels->sprites){
+            if(sprite.labeled && sprite.pointCount > 0){
+                VIZLabel *vizLabel = &vizGameStateSM->LABEL[labelCount++];
 
-                label->value = i->label;
+                vizLabel->objectId = sprite.actorId;
+                vizLabel->value = sprite.label;
+                VIZ_CopyActorName(sprite.actor, vizLabel->objectName);
 
-                if(i->minX >= vizGameStateSM->SCREEN_WIDTH) i->minX = vizGameStateSM->SCREEN_WIDTH - 1;
-                if(i->minY >= vizGameStateSM->SCREEN_HEIGHT) i->minY = vizGameStateSM->SCREEN_HEIGHT - 1;
-                if(i->maxX >= vizGameStateSM->SCREEN_WIDTH) i->maxX = vizGameStateSM->SCREEN_WIDTH - 1;
-                if(i->maxY >= vizGameStateSM->SCREEN_HEIGHT) i->maxY = vizGameStateSM->SCREEN_HEIGHT - 1;
+                if(sprite.minX >= vizGameStateSM->SCREEN_WIDTH) sprite.minX = vizGameStateSM->SCREEN_WIDTH - 1;
+                if(sprite.minY >= vizGameStateSM->SCREEN_HEIGHT) sprite.minY = vizGameStateSM->SCREEN_HEIGHT - 1;
+                if(sprite.maxX >= vizGameStateSM->SCREEN_WIDTH) sprite.maxX = vizGameStateSM->SCREEN_WIDTH - 1;
+                if(sprite.maxY >= vizGameStateSM->SCREEN_HEIGHT) sprite.maxY = vizGameStateSM->SCREEN_HEIGHT - 1;
 
-                label->position[0] = i->minX;
-                label->position[1] = i->minY;
-                label->size[0] = i->maxX - i->minX;
-                label->size[1] = i->maxY - i->minY;
+                vizLabel->position[0] = sprite.minX;
+                vizLabel->position[1] = sprite.minY;
+                vizLabel->size[0] = sprite.maxX - sprite.minX;
+                vizLabel->size[1] = sprite.maxY - sprite.minY;
 
-                label->objectPosition[0] = VIZ_FixedToDouble(i->actor->__pos.x);
-                label->objectPosition[1] = VIZ_FixedToDouble(i->actor->__pos.y);
-                label->objectPosition[2] = VIZ_FixedToDouble(i->actor->__pos.z);
-                label->objectPosition[3] = VIZ_AngleToDouble(i->actor->angle);
-                label->objectPosition[4] = VIZ_PitchToDouble(i->actor->pitch);
-                label->objectPosition[5] = VIZ_AngleToDouble(i->actor->roll);
-                label->objectPosition[6] = VIZ_FixedToDouble(i->actor->velx);
-                label->objectPosition[7] = VIZ_FixedToDouble(i->actor->vely);
-                label->objectPosition[8] = VIZ_FixedToDouble(i->actor->velz);
+                vizLabel->objectPosition[0] = VIZ_FixedToDouble(sprite.actor->__pos.x);
+                vizLabel->objectPosition[1] = VIZ_FixedToDouble(sprite.actor->__pos.y);
+                vizLabel->objectPosition[2] = VIZ_FixedToDouble(sprite.actor->__pos.z);
+                vizLabel->objectPosition[3] = VIZ_AngleToDouble(sprite.actor->angle);
+                vizLabel->objectPosition[4] = VIZ_PitchToDouble(sprite.actor->pitch);
+                vizLabel->objectPosition[5] = VIZ_AngleToDouble(sprite.actor->roll);
+                vizLabel->objectPosition[6] = VIZ_FixedToDouble(sprite.actor->velx);
+                vizLabel->objectPosition[7] = VIZ_FixedToDouble(sprite.actor->vely);
+                vizLabel->objectPosition[8] = VIZ_FixedToDouble(sprite.actor->velz);
 
                 VIZ_DebugMsg(4, VIZ_FUNC, "labelCount: %d, objectId: %d, objectName: %s, value %d",
-                                labelCount + 1, label->objectId, label->objectName, label->value);
-
-                ++labelCount;
+                                labelCount, vizLabel->objectId, vizLabel->objectName, vizLabel->value);
             }
-            if(i->label == VIZ_MAX_LABELS - 1 || labelCount >= VIZ_MAX_LABELS) break;
+            if(labelCount >= VIZ_MAX_LABELS) break;
+        }
+    }
+    vizGameStateSM->LABEL_COUNT = labelCount;
+}
+
+void VIZ_GameStateUpdateObjects(){
+    unsigned int objectCount = 0;
+
+    // Iterate over sectors
+    for (int i = 0; i < numsectors; ++i) {
+        sector_t *sector = &sectors[i];
+
+        // Handle all things in sector
+        for (AActor *actor = sector->thinglist; actor != NULL; actor = actor->snext) {
+            VIZObject *vizObject = &vizGameStateSM->OBJECT[objectCount++];
+
+            VIZ_CopyActorName(actor, vizObject->name);
+
+            vizObject->position[0] = VIZ_FixedToDouble(actor->__pos.x);
+            vizObject->position[1] = VIZ_FixedToDouble(actor->__pos.y);
+            vizObject->position[2] = VIZ_FixedToDouble(actor->__pos.z);
+            vizObject->position[3] = VIZ_AngleToDouble(actor->angle);
+            vizObject->position[4] = VIZ_PitchToDouble(actor->pitch);
+            vizObject->position[5] = VIZ_AngleToDouble(actor->roll);
+            vizObject->position[6] = VIZ_FixedToDouble(actor->velx);
+            vizObject->position[7] = VIZ_FixedToDouble(actor->vely);
+            vizObject->position[8] = VIZ_FixedToDouble(actor->velz);
+
+            VIZ_DebugMsg(4, VIZ_FUNC, "objectCount: %d, id: %d, name: %s", objectCount, vizObject->id, vizObject->name);
+            if(objectCount >= VIZ_MAX_OBJECTS) break;
         }
     }
 
-    vizGameStateSM->LABEL_COUNT = labelCount;
+    vizGameStateSM->OBJECT_COUNT = objectCount;
+}
+
+void VIZ_GameStateUpdateSectors(){
+    //std::unordered_map<sector_t *, int> sectorIds(numsectors);
+    std::unordered_map<line_t *, int> lineIds(numlines);
+
+    unsigned int lineCount = 0;
+    for(int i = 0; i < numlines; ++i){
+        line_t *line = &lines[i];
+        VIZLine *vizLine = &vizGameStateSM->LINE[lineCount++];
+
+        vizLine->position[0] = VIZ_FixedToDouble(line->v1->x);
+        vizLine->position[1] = VIZ_FixedToDouble(line->v1->y);
+        vizLine->position[2] = VIZ_FixedToDouble(line->v2->x);
+        vizLine->position[3] = VIZ_FixedToDouble(line->v2->y);
+
+        //vizLine->frontSector = sectorIds[line->frontsector];
+        //vizLine->backSector = sectorIds[line->backsector];
+
+        lineIds.insert({line, i});
+        vizLine->isBlocking = (line->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS));
+
+        VIZ_DebugMsg(4, VIZ_FUNC, "line: %d, position: (%f, %f), (%f, %f), isBlocking: %d",
+                i, vizLine->position[0], vizLine->position[1], vizLine->position[2], vizLine->position[3], vizLine->isBlocking);
+
+        if(lineCount >= VIZ_MAX_LINES) break;
+    }
+
+    VIZ_DebugMsg(4, VIZ_FUNC, "lineCount: %d, numlines: %d", lineCount, numlines);
+
+    vizGameStateSM->LINE_COUNT = lineCount;
+    assert(lineCount == numlines);
+
+    unsigned int sectorCount = 0;
+    for(int i = 0; i < numsectors; ++i){
+        sector_t *sector = &sectors[i];
+        VIZSector *vizSector = &vizGameStateSM->SECTOR[sectorCount++];
+
+        vizSector->ceilingHeight = VIZ_FixedToDouble(sector->ceilingplane.d);
+        vizSector->floorHeight = VIZ_FixedToDouble(sector->floorplane.d);
+
+        unsigned int sectorLineCount = 0;
+        for(int l = 0; l < sector->linecount; ++l){
+            line_t *line = sector->lines[l];
+            vizSector->lines[sectorLineCount++] = lineIds[line];
+            //auto lineId = lineIds.find(line);
+            //if(lineId != lineIds.end()) vizSector->lines[lineCount++] = lineId->second;
+            //else  = lineIds.insert({line, lineIds.size()}).second;
+        }
+        vizSector->lineCount = sectorLineCount;
+        assert(sectorLineCount == sector->linecount);
+
+        //sectorIds.insert({sector, sectorIds.size()});
+        if(sectorCount >= VIZ_MAX_SECTORS) break;
+    }
+
+    VIZ_DebugMsg(4, VIZ_FUNC, "sectorCount: %d, numsectors: %d", sectorCount, numsectors);
+
+    vizGameStateSM->SECTOR_COUNT = sectorCount;
+    assert(sectorCount == numsectors);
 }
 
 void VIZ_GameStateInitNew(){
@@ -454,11 +599,11 @@ void VIZ_PrintPlayers(){
     for (size_t i = 0; i < VIZ_MAX_PLAYERS; ++i) {
         if(playeringame[i]){
             APlayerPawn* player = players[i].mo;
-            printf("no: %d, name: %s, pos: %f %f %f, rot: %f %f %f, vel: %f %f %f\n", i + 1, players[i].userinfo.GetName(),
+            printf("no: %lu, name: %s, pos: %f %f %f, rot: %f %f %f, vel: %f %f %f\n", i + 1, players[i].userinfo.GetName(),
                    VIZ_FixedToDouble(player->__pos.x), VIZ_FixedToDouble(player->__pos.y), VIZ_FixedToDouble(player->__pos.z),
                    VIZ_AngleToDouble(player->angle), VIZ_PitchToDouble(player->pitch), VIZ_AngleToDouble(player->roll),
                    VIZ_FixedToDouble(player->velx), VIZ_FixedToDouble(player->vely), VIZ_FixedToDouble(player->velz));
-            printf("no: %d, name: %s, dmgCount: %d, hitCount: %d\n", i + 1, players[i].userinfo.GetName(),
+            printf("no: %lu, name: %s, dmgCount: %d, hitCount: %d\n", i + 1, players[i].userinfo.GetName(),
                    vizPlayerLogger[i].dmgCount, vizPlayerLogger[i].hitCount);
         }
     }

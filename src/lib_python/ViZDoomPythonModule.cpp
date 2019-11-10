@@ -279,9 +279,17 @@ PYBIND11_MODULE(vizdoom, vz){
         ENUM_VAL_2_PYT(ANGLE)
         ENUM_VAL_2_PYT(PITCH)
         ENUM_VAL_2_PYT(ROLL)
+        ENUM_VAL_2_PYT(VIEW_HEIGHT)
         ENUM_VAL_2_PYT(VELOCITY_X)
         ENUM_VAL_2_PYT(VELOCITY_Y)
         ENUM_VAL_2_PYT(VELOCITY_Z)
+        ENUM_VAL_2_PYT(CAMERA_POSITION_X)
+        ENUM_VAL_2_PYT(CAMERA_POSITION_Y)
+        ENUM_VAL_2_PYT(CAMERA_POSITION_Z)
+        ENUM_VAL_2_PYT(CAMERA_ANGLE)
+        ENUM_VAL_2_PYT(CAMERA_PITCH)
+        ENUM_VAL_2_PYT(CAMERA_ROLL)
+        ENUM_VAL_2_PYT(CAMERA_FOV)
         ENUM_VAL_2_PYT(USER1)
         ENUM_VAL_2_PYT(USER2)
         ENUM_VAL_2_PYT(USER3)
@@ -366,23 +374,54 @@ PYBIND11_MODULE(vizdoom, vz){
     /* Structs */
     /*----------------------------------------------------------------------------------------------------------------*/
 
-    class_<LabelPython>(vz, "Label")
-        .def_readonly("object_id", &LabelPython::objectId)
-        .def_readonly("object_name", &LabelPython::objectName)
-        .def_readonly("value", &LabelPython::value)
-        .def_readonly("x", &LabelPython::x)
-        .def_readonly("y", &LabelPython::y)
-        .def_readonly("width", &LabelPython::width)
-        .def_readonly("height", &LabelPython::height)
-        .def_readonly("object_position_x", &LabelPython::objectPositionX)
-        .def_readonly("object_position_y", &LabelPython::objectPositionY)
-        .def_readonly("object_position_z", &LabelPython::objectPositionZ)
-        .def_readonly("object_angle", &LabelPython::objectAngle)
-        .def_readonly("object_pitch", &LabelPython::objectPitch)
-        .def_readonly("object_roll", &LabelPython::objectRoll)
-        .def_readonly("object_velocity_x", &LabelPython::objectVelocityX)
-        .def_readonly("object_velocity_y", &LabelPython::objectVelocityY)
-        .def_readonly("object_velocity_z", &LabelPython::objectVelocityZ);
+    #define LABEL_CLASS Label
+    class_<LABEL_CLASS>(vz, "Label")
+    //class_<LabelPython>(vz, "Label")
+        .def_readonly("object_id", &LABEL_CLASS::objectId)
+        .def_readonly("object_name", &LABEL_CLASS::objectName)
+        .def_readonly("value", &LABEL_CLASS::value)
+        .def_readonly("x", &LABEL_CLASS::x)
+        .def_readonly("y", &LABEL_CLASS::y)
+        .def_readonly("width", &LABEL_CLASS::width)
+        .def_readonly("height", &LABEL_CLASS::height)
+        .def_readonly("object_position_x", &LABEL_CLASS::objectPositionX)
+        .def_readonly("object_position_y", &LABEL_CLASS::objectPositionY)
+        .def_readonly("object_position_z", &LABEL_CLASS::objectPositionZ)
+        .def_readonly("object_angle", &LABEL_CLASS::objectAngle)
+        .def_readonly("object_pitch", &LABEL_CLASS::objectPitch)
+        .def_readonly("object_roll", &LABEL_CLASS::objectRoll)
+        .def_readonly("object_velocity_x", &LABEL_CLASS::objectVelocityX)
+        .def_readonly("object_velocity_y", &LABEL_CLASS::objectVelocityY)
+        .def_readonly("object_velocity_z", &LABEL_CLASS::objectVelocityZ);
+
+    #define OBJECT_CLASS Object
+    class_<OBJECT_CLASS>(vz, "Object")
+    //class_<ObjectPython>(vz, "Object")
+        //.def_readonly("id", &OBJECT_CLASS::objectId)
+        .def_readonly("name", &OBJECT_CLASS::name)
+        .def_readonly("position_x", &OBJECT_CLASS::positionX)
+        .def_readonly("position_y", &OBJECT_CLASS::positionY)
+        .def_readonly("position_z", &OBJECT_CLASS::positionZ)
+        .def_readonly("angle", &OBJECT_CLASS::angle)
+        .def_readonly("pitch", &OBJECT_CLASS::pitch)
+        .def_readonly("roll", &OBJECT_CLASS::roll)
+        .def_readonly("velocity_x", &OBJECT_CLASS::velocityX)
+        .def_readonly("velocity_y", &OBJECT_CLASS::velocityY)
+        .def_readonly("velocity_z", &OBJECT_CLASS::velocityZ);
+
+    #define LINE_CLASS Line
+    class_<LINE_CLASS>(vz, "Line")
+        .def_readonly("x1", &LINE_CLASS::x1)
+        .def_readonly("y1", &LINE_CLASS::y1)
+        .def_readonly("x2", &LINE_CLASS::x2)
+        .def_readonly("y2", &LINE_CLASS::y2)
+        .def_readonly("is_blocking", &LINE_CLASS::isBlocking);
+
+    #define SECTOR_CLASS SectorPython
+    class_<SECTOR_CLASS>(vz, "Sector")
+        .def_readonly("floor_height", &SECTOR_CLASS::floorHeight)
+        .def_readonly("ceiling_height", &SECTOR_CLASS::ceilingHeight)
+        .def_readonly("lines", &SECTOR_CLASS::lines);
 
     class_<GameStatePython>(vz, "GameState")
         .def_readonly("number", &GameStatePython::number)
@@ -394,7 +433,9 @@ PYBIND11_MODULE(vizdoom, vz){
         .def_readonly("labels_buffer", &GameStatePython::labelsBuffer)
         .def_readonly("automap_buffer", &GameStatePython::automapBuffer)
 
-        .def_readonly("labels", &GameStatePython::labels);
+        .def_readonly("labels", &GameStatePython::labels)
+        .def_readonly("objects", &GameStatePython::objects)
+        .def_readonly("sectors", &GameStatePython::sectors);
 
     class_<ServerStatePython>(vz, "ServerState")
         .def_readonly("tic", &ServerStatePython::tic)
@@ -416,6 +457,7 @@ PYBIND11_MODULE(vizdoom, vz){
         .def("load_config", &DoomGamePython::loadConfig)
         .def("close", &DoomGamePython::close)
         .def("is_running", &DoomGamePython::isRunning)
+        .def("is_multiplayer_game", &DoomGamePython::isMultiplayerGame)
         .def("is_recording_episode", &DoomGamePython::isRecordingEpisode)
         .def("is_replaying_episode", &DoomGamePython::isReplayingEpisode)
         .def("new_episode", &DoomGamePython::newEpisode_)
@@ -432,6 +474,8 @@ PYBIND11_MODULE(vizdoom, vz){
         .def("advance_action", &DoomGamePython::advanceAction_)
         .def("advance_action", &DoomGamePython::advanceAction_int)
         .def("advance_action", &DoomGamePython::advanceAction_int_bool)
+        //.def("save_state", &DoomGamePython::saveState)
+        //.def("load_state", &DoomGamePython::loadState)
 
         .def("get_state", &DoomGamePython::getState, return_value_policy::take_ownership)
         .def("get_server_state", &DoomGamePython::getServerState, return_value_policy::take_ownership)
@@ -507,6 +551,10 @@ PYBIND11_MODULE(vizdoom, vz){
         .def("set_automap_mode", &DoomGamePython::setAutomapMode)
         .def("set_automap_rotate", &DoomGamePython::setAutomapRotate)
         .def("set_automap_render_textures", &DoomGamePython::setAutomapRenderTextures)
+        .def("is_objects_info_enabled", &DoomGamePython::isObjectsInfoEnabled)
+        .def("set_objects_info_enabled", &DoomGamePython::setObjectsInfoEnabled)
+        .def("is_sectors_info_enabled", &DoomGamePython::isSectorsInfoEnabled)
+        .def("set_sectors_info_enabled", &DoomGamePython::setSectorsInfoEnabled)
 
         .def("set_render_hud", &DoomGamePython::setRenderHud)
         .def("set_render_minimal_hud", &DoomGamePython::setRenderMinimalHud)

@@ -68,8 +68,8 @@ namespace vizdoom {
 
     // For GCC versions lower then 5 compatibility
     // Python version of Label struct with Python string instead C++ string type.
-    struct LabelPython{
-
+    /*
+    struct LabelPython {
         uint8_t value;
         unsigned int x;
         unsigned int y;
@@ -93,6 +93,39 @@ namespace vizdoom {
         pyb::str objectName;
     };
 
+    struct ObjectPython {
+        unsigned int id;
+
+        double positionX;
+        double positionY;
+        double positionZ;
+
+        double angle;
+        double pitch;
+        double roll;
+
+        double velocityX;
+        double velocityY;
+        double velocityZ;
+
+        pyb::str name;
+    };
+
+    struct LinePython {
+        double x1;
+        double y1;
+        double x2;
+        double y2;
+        bool isBlocking;
+    };
+    */
+
+    struct SectorPython {
+        double floorHeight;
+        double ceilingHeight;
+        pyb::list lines;
+    };
+
     struct GameStatePython {
         unsigned int number;
         unsigned int tic;
@@ -106,6 +139,8 @@ namespace vizdoom {
         pyb::object automapBuffer;
 
         pyb::list labels;
+        pyb::list objects;
+        pyb::list sectors;
     };
 
     struct ServerStatePython {
